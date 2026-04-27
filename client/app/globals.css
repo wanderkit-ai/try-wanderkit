@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: 60 16% 98%;             /* #fbfbfa  page */
+    --panel: 0 0% 100%;           /* #ffffff  card */
+    --sidebar: 60 9% 96%;         /* #f5f5f3  sidebar */
+    --hover: 60 9% 93%;           /* #ededea  hover */
+    --border: 30 6% 88%;          /* #e3e1de  divider */
+    --ink: 30 10% 14%;            /* #2a2723  primary text */
+    --ink-2: 30 6% 35%;           /* #5e5a55  secondary text */
+    --muted: 30 4% 55%;           /* #8b8782  tertiary */
+    --accent: 168 41% 33%;        /* #2e7d6b  mossy teal */
+    --accent-soft: 168 35% 92%;   /* #dceee9  accent bg tint */
+    --success: 145 50% 38%;
+    --warn: 35 90% 45%;
+    --danger: 0 65% 50%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html, body {
+    background-color: hsl(var(--bg));
+    color: hsl(var(--ink));
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: hsl(var(--accent) / 0.18);
+  }
+
+  /* Notion-like scrollbar */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border: 3px solid hsl(var(--bg));
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(30 4% 70%);
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer components {
+  .surface {
+    background: hsl(var(--panel));
+    border: 1px solid hsl(var(--border));
+    border-radius: 8px;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-2xs font-medium;
+    background: hsl(var(--hover));
+    color: hsl(var(--ink-2));
+  }
+
+  .chip-accent {
+    background: hsl(var(--accent-soft));
+    color: hsl(var(--accent));
+  }
+
+  .row {
+    @apply flex items-center px-3 h-9 text-sm rounded transition-colors;
+  }
+  .row:hover {
+    background: hsl(var(--hover));
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 h-8 px-3 text-sm rounded font-medium transition-colors;
+  }
+  .btn-primary {
+    background: hsl(var(--ink));
+    color: hsl(var(--bg));
+  }
+  .btn-primary:hover {
+    background: hsl(30 10% 8%);
+  }
+  .btn-ghost {
+    color: hsl(var(--ink-2));
+  }
+  .btn-ghost:hover {
+    background: hsl(var(--hover));
+    color: hsl(var(--ink));
+  }
+  .btn-outline {
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--panel));
+    color: hsl(var(--ink));
+  }
+  .btn-outline:hover {
+    background: hsl(var(--hover));
+  }
+}
