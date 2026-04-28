@@ -6,6 +6,10 @@ import type {
   Quote,
   Message,
   AgentEvent,
+  TripLink,
+  JoinQuestion,
+  JoinQuestionKey,
+  WaitlistEntry,
 } from './types';
 
 const COLORS = ['#e07a5f', '#81b29a', '#f2cc8f', '#3d405b', '#a8dadc', '#e76f51', '#a6b1e1', '#cdb4db'];
@@ -623,4 +627,169 @@ export const mockHotels: HotelResult[] = [
   { id: 'ht_4', name: 'Heure Bleue Palais', location: 'Essaouira, Morocco', stars: 5, rating: 4.7, reviewCount: 892, pricePerNightUsd: 290, amenities: ['Rooftop pool', 'Hammam', 'Restaurant', 'Ocean views'], style: 'Riad palace' },
   { id: 'ht_5', name: 'Playa Guiones Villa', location: 'Nosara, Costa Rica', stars: 4, rating: 4.9, reviewCount: 142, pricePerNightUsd: 420, amenities: ['Private pool', 'Beachfront', '8 beds', 'Surf storage'], style: 'Private villa' },
   { id: 'ht_6', name: 'The Emakoko', location: 'Karen, Nairobi', stars: 5, rating: 4.8, reviewCount: 430, pricePerNightUsd: 310, amenities: ['Bush views', 'Pool', 'Fine dining', 'Wildlife walks'], style: 'Boutique lodge' },
+];
+
+function joinQ(
+  key: JoinQuestionKey,
+  enabled: boolean,
+  required: boolean
+): JoinQuestion {
+  return { key, enabled, required };
+}
+
+const ALWAYS_ON: JoinQuestion[] = [
+  joinQ('partySize', true, true),
+  joinQ('roomPreference', true, true),
+  joinQ('roommateName', true, false),
+  joinQ('dietaryRestrictions', true, true),
+  joinQ('allergies', true, false),
+  joinQ('mobilityNeeds', true, false),
+  joinQ('emergencyContact', true, true),
+  joinQ('whyInterested', true, true),
+];
+
+const HIKING_EXTRAS: JoinQuestion[] = [
+  joinQ('fitnessLevel', true, true),
+  joinQ('priorExperience', true, false),
+  joinQ('surfLevel', false, false),
+  joinQ('nationality', false, false),
+  joinQ('phone', true, false),
+  joinQ('dateOfBirth', false, false),
+  joinQ('passport', false, false),
+  joinQ('travelInsurance', true, false),
+  joinQ('heardAboutUs', true, false),
+  joinQ('tshirtSize', false, false),
+  joinQ('specialRequests', true, false),
+];
+
+const BEACH_EXTRAS: JoinQuestion[] = [
+  joinQ('fitnessLevel', false, false),
+  joinQ('priorExperience', false, false),
+  joinQ('surfLevel', true, false),
+  joinQ('nationality', false, false),
+  joinQ('phone', true, false),
+  joinQ('dateOfBirth', false, false),
+  joinQ('passport', false, false),
+  joinQ('travelInsurance', true, false),
+  joinQ('heardAboutUs', true, false),
+  joinQ('tshirtSize', false, false),
+  joinQ('specialRequests', true, false),
+];
+
+const CULTURAL_EXTRAS: JoinQuestion[] = [
+  joinQ('fitnessLevel', false, false),
+  joinQ('priorExperience', false, false),
+  joinQ('surfLevel', false, false),
+  joinQ('nationality', true, true),
+  joinQ('phone', true, false),
+  joinQ('dateOfBirth', false, false),
+  joinQ('passport', true, false),
+  joinQ('travelInsurance', true, false),
+  joinQ('heardAboutUs', true, false),
+  joinQ('tshirtSize', false, false),
+  joinQ('specialRequests', true, false),
+];
+
+export const tripLinks: TripLink[] = [
+  {
+    id: 'lnk_nepal',
+    slug: 'nepal-expedition-2026',
+    influencerId: 'inf_jamie',
+    title: 'Nepal Expedition — Oct 2026',
+    destination: 'Pokhara & Kathmandu, Nepal',
+    startDate: '2026-10-12',
+    endDate: '2026-10-24',
+    style: ['hiking', 'expedition'],
+    capacity: 8,
+    audienceDescription: "Join me for 12 days in the Himalayas. We'll trek to Annapurna Base Camp, stay in teahouses, and finish with two nights in Kathmandu. Limited to 8 people — serious hikers only.\n\nThis is a real expedition. Expect 6–8 hours of trekking per day, altitude above 4,000 m, and cold nights. What you'll get: unreal views, a small tight-knit group, and a guide team I trust completely.",
+    coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80',
+    galleryImages: [
+      'https://images.unsplash.com/photo-1571770096658-4fa9e1b0de27?w=800&q=80',
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80',
+      'https://images.unsplash.com/photo-1573408259524-e5e0bb46f46e?w=800&q=80',
+    ],
+    itinerary: [
+      { day: 1, date: '2026-10-12', location: 'Kathmandu', activities: ['Arrive at Tribhuvan International', 'Transfer to Thamel hotel', 'Gear check and briefing with guide', 'Welcome dinner at a rooftop restaurant'], transit: 'International flight', lodging: 'Hotel Yak & Yeti, Kathmandu' },
+      { day: 2, date: '2026-10-13', location: 'Pokhara', activities: ['Morning flight to Pokhara', 'Lakeside stroll and gear top-up', 'Trek briefing and team dinner'], transit: 'Domestic flight (35 min)', lodging: 'Butterfly Lodge, Pokhara' },
+      { day: 3, date: '2026-10-14', location: 'Tikhedhunga (1,540 m)', activities: ['Drive to Nayapul trailhead', 'Trek through terraced fields and rhododendron forest', 'Cross Bhurungdi Khola suspension bridge'], transit: 'Drive 1.5 h then trek 5 h', lodging: 'Mountain Tea House' },
+      { day: 4, date: '2026-10-15', location: 'Ghorepani (2,860 m)', activities: ['Trek through stone-paved trail and dense forest', 'Arrive at Ghorepani village', 'Explore Poon Hill viewpoint'], transit: 'Trek 6 h', lodging: 'Himalaya Inn' },
+      { day: 5, date: '2026-10-16', location: 'Tadapani (2,630 m)', activities: ['Pre-dawn hike to Poon Hill summit (3,210 m) for sunrise', 'Panoramic views of Annapurna, Dhaulagiri, Machhapuchhre', 'Trek down through rhododendron forest to Tadapani'], transit: 'Trek 7 h', lodging: 'Forest Camp Lodge' },
+      { day: 6, date: '2026-10-17', location: 'Chhomrong (2,170 m)', activities: ['Descend through Modi Khola valley', 'Cross Kimrong Khola river', 'Chhomrong village exploration and acclimatisation walk'], transit: 'Trek 6 h', lodging: 'Chhomrong Guest House' },
+      { day: 7, date: '2026-10-18', location: 'Dovan (2,580 m)', activities: ['Enter Annapurna Sanctuary', 'Trek through bamboo and rhododendron', 'Crossing several snow bridges'], transit: 'Trek 5 h', lodging: 'Dovan Tea House' },
+      { day: 8, date: '2026-10-19', location: 'ABC — Annapurna Base Camp (4,130 m)', activities: ['Early start, cold and thrilling ascent to ABC', 'Circle of massive peaks: Annapurna I, South, Machhapuchhre', 'Afternoon at camp — photography, reflection, hot tea'], transit: 'Trek 7 h', lodging: 'Annapurna Base Camp Lodge' },
+      { day: 9, date: '2026-10-20', location: 'Bamboo (2,310 m)', activities: ['Long descent via Machhapuchhre Base Camp', 'Knees-testing but rewarding trail', 'River crossing and lunch stop'], transit: 'Trek 7 h', lodging: 'Bamboo Lodge' },
+      { day: 10, date: '2026-10-21', location: 'Jhinu Danda (1,780 m)', activities: ['Descent through Chhomrong', 'Hot spring soak at Jhinu Danda — a well-earned reward', 'Celebratory team dinner'], transit: 'Trek 5 h', lodging: 'Jhinu Hot Spring Lodge' },
+      { day: 11, date: '2026-10-22', location: 'Pokhara', activities: ['Final trek out to Siwai and drive to Pokhara', 'Lakeside evening, last gear pack-down', 'Team dinner and awards ceremony'], transit: 'Trek 3 h + drive 1.5 h', lodging: 'Butterfly Lodge, Pokhara' },
+      { day: 12, date: '2026-10-23', location: 'Kathmandu', activities: ['Morning flight back to Kathmandu', 'Boudhanath Stupa visit', 'Thamel shopping, souvenir hunting', 'Group farewell dinner'], transit: 'Domestic flight (35 min)', lodging: 'Hotel Yak & Yeti, Kathmandu' },
+      { day: 13, date: '2026-10-24', location: 'Kathmandu → Home', activities: ['Early hotel checkout', 'Transfer to TIA Airport', 'Departures'], transit: 'International flight', lodging: '' },
+    ],
+    itinerarySource: 'ai',
+    joinQuestions: [...ALWAYS_ON, ...HIKING_EXTRAS],
+    status: 'live',
+    createdAt: '2026-03-10',
+    responseCount: 24,
+  },
+  {
+    id: 'lnk_kenya',
+    slug: 'kenya-safari-families',
+    influencerId: 'inf_maya',
+    title: 'Kenya Safari for Families — July 2026',
+    destination: 'Maasai Mara & Amboseli, Kenya',
+    startDate: '2026-07-08',
+    endDate: '2026-07-18',
+    style: ['safari', 'cultural'],
+    capacity: 12,
+    audienceDescription: "A slow, intentional safari across the Maasai Mara and Amboseli. Designed for families with children 8+. We cook together, learn about local communities, and watch the Great Migration.\n\nThis isn't a rush-and-tick experience. We spend two full days in each location, work with Maasai community guides, and share meals around the fire. Children and adults get equal attention.",
+    coverImage: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=1200&q=80',
+    galleryImages: [
+      'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800&q=80',
+      'https://images.unsplash.com/photo-1573408259524-e5e0bb46f46e?w=800&q=80',
+    ],
+    itinerary: [
+      { day: 1, date: '2026-07-08', location: 'Nairobi', activities: ['Arrive at JKIA', 'Transfer to Karen area boutique hotel', 'Welcome briefing and dinner'], transit: 'International flight', lodging: 'The Emakoko, Karen' },
+      { day: 2, date: '2026-07-09', location: 'Nairobi', activities: ['Morning visit to David Sheldrick Elephant Orphanage', 'Giraffe Centre afternoon', 'Maasai craft market visit'], transit: 'City transfers', lodging: 'The Emakoko, Karen' },
+      { day: 3, date: '2026-07-10', location: 'Maasai Mara', activities: ['Fly to Mara airstrip', 'Afternoon game drive — wildebeest migration scouting', 'Sundowner at viewpoint'], transit: 'Charter flight 45 min', lodging: 'Mara Serena Safari Lodge' },
+      { day: 4, date: '2026-07-11', location: 'Maasai Mara', activities: ['Full-day game drive with picnic lunch', 'Great Migration river crossing (seasonal)', 'Children\'s bush school session'], transit: 'None', lodging: 'Mara Serena Safari Lodge' },
+      { day: 5, date: '2026-07-12', location: 'Maasai Mara', activities: ['Optional hot-air balloon safari at dawn', 'Maasai village cultural visit', 'Guided nature walk', 'Community cooking class'], transit: 'None', lodging: 'Mara Serena Safari Lodge' },
+      { day: 6, date: '2026-07-13', location: 'Lake Naivasha', activities: ['Drive through the Great Rift Valley with stops', 'Boat safari on Lake Naivasha — hippos and birds', 'Walking with Rothschild giraffes at Crescent Island'], transit: 'Drive 3 h', lodging: 'Chui Lodge, Naivasha' },
+      { day: 7, date: '2026-07-14', location: 'Amboseli', activities: ['Drive to Amboseli — Kilimanjaro views en route', 'Afternoon game drive: large elephant herds', 'Night sounds game activity for children'], transit: 'Drive 4 h', lodging: 'Tortilis Camp, Amboseli' },
+      { day: 8, date: '2026-07-15', location: 'Amboseli', activities: ['Dawn drive for golden-hour Kilimanjaro photography', 'Observation Hill for panoramic Amboseli overview', 'Community-led lunch with local families'], transit: 'None', lodging: 'Tortilis Camp, Amboseli' },
+      { day: 9, date: '2026-07-16', location: 'Amboseli', activities: ['Final full-day game drive', 'Children\'s wildlife journalling session', 'Group campfire dinner and storytelling'], transit: 'None', lodging: 'Tortilis Camp, Amboseli' },
+      { day: 10, date: '2026-07-17', location: 'Nairobi', activities: ['Drive back to Nairobi', 'Farewell lunch at Carnivore Restaurant', 'Airport transfers'], transit: 'Drive 4 h', lodging: '' },
+      { day: 11, date: '2026-07-18', location: 'Departures', activities: ['Departures from JKIA'], transit: 'International flight', lodging: '' },
+    ],
+    itinerarySource: 'ai',
+    joinQuestions: [...ALWAYS_ON, ...CULTURAL_EXTRAS],
+    status: 'live',
+    createdAt: '2026-02-28',
+    responseCount: 41,
+  },
+  {
+    id: 'lnk_bali',
+    slug: 'bali-surf-wellness',
+    influencerId: 'inf_lucas',
+    title: 'Bali Surf + Wellness — Sept 2026',
+    destination: 'Canggu & Uluwatu, Bali',
+    startDate: '2026-09-06',
+    endDate: '2026-09-16',
+    style: ['beach', 'wellness'],
+    capacity: 10,
+    audienceDescription: "Morning surf, afternoon yoga, sunset ceremonies. 10 days in Canggu and Uluwatu. No experience needed — I teach all levels.\n\nWe start each day in the ocean and end it in stillness. There's space for growth, rest, and genuinely good food. The group will be small, the vibes will be right.",
+    coverImage: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1200&q=80',
+    galleryImages: [],
+    itinerary: [],
+    itinerarySource: 'manual',
+    joinQuestions: [...ALWAYS_ON, ...BEACH_EXTRAS],
+    status: 'draft',
+    createdAt: '2026-04-01',
+    responseCount: 0,
+  },
+];
+
+export const waitlist: WaitlistEntry[] = [
+  { id: 'wl_1', tripId: 'trip_annapurna', name: 'Elena Kozlov', email: 'elena.k@proton.me', partySize: 2, joinedAt: '2026-04-20', notes: 'Flexible on dates if a spot opens up' },
+  { id: 'wl_2', tripId: 'trip_annapurna', name: 'James Okonkwo', email: 'j.okonkwo@gmail.com', partySize: 1, joinedAt: '2026-04-22' },
+  { id: 'wl_3', tripId: 'trip_annapurna', name: 'Lucia Ferreira', email: 'lucia.f@outlook.com', partySize: 2, joinedAt: '2026-04-23', notes: 'Solo traveller OK if party required' },
+  { id: 'wl_4', tripId: 'trip_mara', name: 'Sophie Laurent', email: 'sophie.l@orange.fr', partySize: 3, joinedAt: '2026-04-15', notes: 'Family with one toddler (age 3)' },
+  { id: 'wl_5', tripId: 'trip_nosara', name: 'Ben Hartley', email: 'ben.h@icloud.com', partySize: 1, joinedAt: '2026-04-25' },
 ];

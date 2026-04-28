@@ -4,10 +4,11 @@ import { Avatar } from '@/components/avatar';
 import { StatusPill } from '@/components/status-pill';
 import {
   customers,
-  influencers,
   operators,
   trips,
+  tripLinks,
   agentEvents,
+  influencers,
   findById,
 } from '@/lib/mock-data';
 import { formatRelative, formatMoney } from '@/lib/utils';
@@ -15,7 +16,7 @@ import {
   Plane,
   Users,
   Building2,
-  Sparkles,
+  Link2,
   Bot,
   ArrowUpRight,
   Activity,
@@ -28,7 +29,7 @@ export default function HomePage() {
   const stats = [
     { label: 'Active trips', value: activeTrips.length, icon: Plane, href: '/trips' },
     { label: 'Customers', value: customers.length, icon: Users, href: '/people/customers' },
-    { label: 'Influencers', value: influencers.length, icon: Sparkles, href: '/people/influencers' },
+    { label: 'Trip Links', value: tripLinks.filter((l) => l.status === 'live').length, icon: Link2, href: '/links' },
     { label: 'Operators', value: operators.length, icon: Building2, href: '/people/operators' },
   ];
 

@@ -8,14 +8,15 @@ export default function AgentPage({
   searchParams,
 }: {
   params: { name: string };
-  searchParams: { trip?: string };
+  searchParams: { trip?: string; message?: string };
 }) {
   const config = AGENT_LIST.find((a) => a.name === params.name);
   if (!config) notFound();
 
-  const tripId = searchParams.trip;
-  const initialMessage = tripId
-    ? `Build the itinerary for trip ${tripId}`
+  const initialMessage = searchParams.message
+    ? decodeURIComponent(searchParams.message)
+    : searchParams.trip
+    ? `Build the itinerary for trip ${searchParams.trip}`
     : undefined;
 
   return (
