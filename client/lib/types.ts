@@ -80,6 +80,7 @@ export interface Operator {
   responseHours: number;
   priceTier: '$' | '$$' | '$$$';
   notes?: string;
+  starred?: boolean;
 }
 
 export interface TripBrief {
@@ -178,7 +179,7 @@ export interface WaitlistEntry {
   notes?: string;
 }
 
-export type AgentName = 'concierge' | 'itinerary' | 'matchmaker' | 'negotiator' | 'booker' | 'compliance' | 'payments' | 'social';
+export type AgentName = 'itinerary' | 'scout';
 
 export interface AgentEvent {
   id: string;

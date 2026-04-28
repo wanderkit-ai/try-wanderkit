@@ -6,6 +6,7 @@ import {
   quotes,
   findById,
 } from '@/lib/mock-data';
+import { search as tavilySearch } from './tavily';
 import type { ItineraryDay } from '@/lib/types';
 import type { TripStyle } from '@/lib/types';
 
@@ -364,77 +365,137 @@ const find_compatible_customers: ToolDef = {
   },
 };
 
-// ─── Itinerary tools ────────────────────────────────────────────────────────
+// ─── Trip listing ───────────────────────────────────────────────────────────
 
-const DESTINATION_ITINERARIES: Record<string, (startDate: string) => ItineraryDay[]> = {
-  annapurna: (start) => {
-    const base = new Date(start);
-    const d = (n: number) => new Date(base.getTime() + (n - 1) * 86400000).toISOString().slice(0, 10);
-    return [
-      { day: 1, date: d(1), location: 'Kathmandu', activities: ['Arrive at Tribhuvan International', 'Transfer to Thamel hotel', 'Gear check and briefing with guide', 'Welcome dinner at a rooftop restaurant'], transit: 'International flight', lodging: 'Hotel Yak & Yeti, Kathmandu' },
-      { day: 2, date: d(2), location: 'Kathmandu → Pokhara', activities: ['Morning flight to Pokhara (25 min)', 'Acclimatisation walk around Phewa Lake', 'Visit Bindhyabasini Temple', 'Briefing and packing for the trail'], transit: 'Domestic flight KTM→PKR', lodging: 'Fish Tail Lodge, Pokhara' },
-      { day: 3, date: d(3), location: 'Pokhara → Nayapul → Tikhedhunga', activities: ['Drive to Nayapul (1.5h)', 'Trek through Birethanti river valley', 'Steep ascent through rhododendron forest', 'Arrive Tikhedhunga (1,540 m)'], transit: 'Private jeep to Nayapul', lodging: 'Himalayan Teahouse, Tikhedhunga' },
-      { day: 4, date: d(4), location: 'Tikhedhunga → Ghorepani', activities: ['Climb the famous stone staircase to Ulleri', 'Trek through dense forest of oak and rhododendron', 'Arrive Ghorepani (2,860 m)', 'Evening views of Annapurna South'], transit: 'Trek 10 km / 5h', lodging: 'Snowland Teahouse, Ghorepani' },
-      { day: 5, date: d(5), location: 'Poon Hill & Tadapani', activities: ['Pre-dawn hike to Poon Hill (3,210 m) for sunrise panorama', 'Views of Dhaulagiri, Annapurna, Machapuchare', 'Return to Ghorepani for breakfast', 'Trek to Tadapani through rhododendron forest'], transit: 'Trek 14 km / 6h', lodging: 'Forest Camp Teahouse, Tadapani' },
-      { day: 6, date: d(6), location: 'Tadapani → Chomrong', activities: ['Descend to Kimrong Khola river crossing', 'Steep climb to Chomrong village (2,170 m)', 'Visit local monastery', 'Arrange permits for Annapurna Sanctuary'], transit: 'Trek 9 km / 5h', lodging: 'Chomrong Cottage, Chomrong' },
-      { day: 7, date: d(7), location: 'Chomrong → Dovan', activities: ['Cross Chomrong Khola suspension bridge', 'Enter Annapurna Conservation Area', 'Trek through bamboo and rhododendron forest', 'Pass Khuldighar and Bamboo villages'], transit: 'Trek 11 km / 5h', lodging: 'Dovan Teahouse' },
-      { day: 8, date: d(8), location: 'Dovan → Machhapuchhre Base Camp', activities: ['Early start through Himalayan Canyon', 'Cross avalanche zones quickly in the morning', 'Pass Deurali to MBC (3,700 m)', 'First views of Machhapuchhre (Fishtail)'], transit: 'Trek 12 km / 6h', lodging: 'MBC Teahouse (3,700 m)' },
-      { day: 9, date: d(9), location: 'Annapurna Base Camp (4,130 m)', activities: ['Trek to ABC — the highlight of the circuit', 'Arrive in the Annapurna amphitheatre', 'Surrounded by Annapurna I, II, III, IV, South', 'Sunset ceremony and group photo'], transit: 'Trek 5 km / 2.5h', lodging: 'ABC Mountain Lodge (4,130 m)' },
-      { day: 10, date: d(10), location: 'ABC → Bamboo', activities: ['Early morning light on Annapurna I (8,091 m)', 'Begin descent — legs will feel it', 'Pass MBC and Deurali', 'Arrive Bamboo for well-earned rest'], transit: 'Trek 16 km / 7h', lodging: 'Bamboo Lodge' },
-      { day: 11, date: d(11), location: 'Bamboo → Jhinu Danda', activities: ['Pass back through Chomrong', 'Descend to Jhinu Danda', 'Natural hot springs soak (1h) — post-trek bliss', 'Group dinner and storytelling'], transit: 'Trek 12 km / 5h', lodging: 'New Hot Spring Lodge, Jhinu Danda' },
-      { day: 12, date: d(12), location: 'Jhinu → Nayapul → Pokhara', activities: ['Final morning descent to Siwai', 'Drive back to Pokhara', 'Lakeside stroll on Phewa Lake', 'Farewell dinner with mountain views'], transit: 'Trek 3 km + jeep to Pokhara', lodging: 'Fish Tail Lodge, Pokhara' },
-      { day: 13, date: d(13), location: 'Pokhara → Kathmandu → Departure', activities: ['Morning flight to Kathmandu', 'Airport transfer and farewells', 'Optional last-minute Thamel shopping'], transit: 'Domestic flight PKR→KTM', lodging: 'None (departure day)' },
-    ];
+const list_trips: ToolDef = {
+  name: 'list_trips',
+  description: 'List all trips in the system. Use this to find a trip by name or destination when the user hasn\'t provided a trip_id.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      status: { type: 'string', description: 'Filter by trip status (brief, sourcing, quoting, approved, booked, completed, cancelled)' },
+      destination: { type: 'string', description: 'Filter by destination keyword (e.g. Patagonia, Bali)' },
+    },
   },
-  mara: (start) => {
-    const base = new Date(start);
-    const d = (n: number) => new Date(base.getTime() + (n - 1) * 86400000).toISOString().slice(0, 10);
-    return [
-      { day: 1, date: d(1), location: 'Nairobi', activities: ['Arrive at JKIA, Nairobi', 'Transfer to Karen suburb boutique hotel', 'Welcome briefing with guide and naturalist', 'Dinner at Carnivore Restaurant'], transit: 'International flight', lodging: 'The Emakoko, Karen' },
-      { day: 2, date: d(2), location: 'Nairobi → Maasai Mara', activities: ['Scenic 45-min charter flight over the Rift Valley', 'Check in to tented camp', 'Afternoon game drive — lion and cheetah territory', 'Sundowner drinks on the savannah'], transit: 'Charter flight NBO→Mara airstrip', lodging: 'Savana Mara Camp, Olare Motorogi' },
-      { day: 3, date: d(3), location: 'Maasai Mara — Northern Conservancy', activities: ['Dawn game drive (5:30am) — best predator activity', 'Big Five checklist: buffalo, elephant, lion, leopard spotted', 'Bush breakfast in the field', 'Afternoon: Mara River crossing observation point'], transit: 'Open 4×4 game drives', lodging: 'Savana Mara Camp' },
-      { day: 4, date: d(4), location: 'Maasai Mara — Wildebeest Migration', activities: ['Full-day drive following the Great Migration herds', 'Witness a river crossing — 1.5M wildebeest + crocodiles', 'Picnic lunch in the bush', 'Return for evening cheetah tracking'], transit: 'Full-day 4×4 safari', lodging: 'Savana Mara Camp' },
-      { day: 5, date: d(5), location: 'Maasai Mara — Cultural Day', activities: ['Morning: hot-air balloon safari over the Mara (optional)', 'Late breakfast back at camp', 'Afternoon: visit to local Maasai village — boma tour, school visit', 'Maasai elder talks on land rights and wildlife coexistence'], transit: 'Ground vehicle', lodging: 'Savana Mara Camp' },
-      { day: 6, date: d(6), location: 'Mara → Lake Naivasha', activities: ['Morning game drive on way out', 'Charter flight to Lake Naivasha airstrip', 'Boat safari on Naivasha — hippos, herons, fish eagles', 'Walking safari on Crescent Island'], transit: 'Charter flight + boat', lodging: 'Enashipai Resort, Lake Naivasha' },
-      { day: 7, date: d(7), location: 'Lake Naivasha → Hell\'s Gate', activities: ['Cycling through Hell\'s Gate National Park', 'Gorge walk with local guide', 'Geothermal spa at Olkaria (natural hot springs)', 'Sundowner overlooking the Rift Valley escarpment'], transit: 'Private vehicle', lodging: 'Enashipai Resort' },
-      { day: 8, date: d(8), location: 'Naivasha → Amboseli', activities: ['Drive through Great Rift Valley floor', 'Arrive Amboseli — elephants with Kilimanjaro backdrop', 'Afternoon drive: largest elephant herds in Kenya', 'Sunset photography session at the salt flats'], transit: 'Private safari vehicle', lodging: 'Tortilis Camp, Amboseli' },
-      { day: 9, date: d(9), location: 'Amboseli — Elephants & Kili Views', activities: ['Dawn drive for clear Kilimanjaro views', 'Visit Ol Tukai elephant research station', 'Afternoon: Maasai dancing and beadwork market', 'Bush dinner under the stars'], transit: 'Open 4×4 safari', lodging: 'Tortilis Camp, Amboseli' },
-      { day: 10, date: d(10), location: 'Amboseli → Nairobi → Departure', activities: ['Final sunrise drive', 'Return to Nairobi by road or charter', 'Optional: lunch at Nairobi National Museum cafe', 'Airport transfer and departures'], transit: 'Charter or road to JKIA', lodging: 'None (departure day)' },
-    ];
+  handler: ({ status, destination }) =>
+    trips
+      .filter((t) => !status || t.status === status)
+      .filter((t) => !destination || t.destination.toLowerCase().includes(String(destination).toLowerCase()) || t.title.toLowerCase().includes(String(destination).toLowerCase()))
+      .map((t) => ({
+        id: t.id,
+        title: t.title,
+        destination: t.destination,
+        status: t.status,
+        startDate: t.startDate,
+        endDate: t.endDate,
+        groupSize: t.groupSize,
+        style: t.style,
+        budgetPerPerson: `$${(t.budgetPerPerson / 100).toFixed(0)}/pp/day`,
+        hasItinerary: !!(t.itinerary && t.itinerary.length > 0),
+      })),
+};
+
+// ─── Web search (mock) ───────────────────────────────────────────────────────
+
+const web_search_destination: ToolDef = {
+  name: 'web_search_destination',
+  description: 'Search the web for destination research: best time to visit, highlights, logistics, permits, and insider tips. Use this to enrich an itinerary before generating it.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      destination: { type: 'string', description: 'The destination or region to research (e.g. Patagonia, Bali, Marrakech)' },
+      focus: { type: 'string', description: 'Optional focus area: logistics, activities, weather, culture, fitness' },
+    },
+    required: ['destination'],
   },
-  marrakech: (start) => {
-    const base = new Date(start);
-    const d = (n: number) => new Date(base.getTime() + (n - 1) * 86400000).toISOString().slice(0, 10);
-    return [
-      { day: 1, date: d(1), location: 'Marrakech', activities: ['Arrive at Marrakech Menara Airport', 'Transfer to riad in the medina', 'Rooftop mint tea welcome', 'Evening stroll through Djemaa el-Fna square'], transit: 'Airport transfer', lodging: 'Atlas Riads Collection, Medina' },
-      { day: 2, date: d(2), location: 'Marrakech — Medina Deep Dive', activities: ['Morning: guided souks tour (spices, leather, metalwork)', 'Medersa Ben Youssef — Islamic geometry masterclass', 'Lunch: bastilla at a family-run dar', 'Afternoon: Bahia Palace and El Badi ruins'], transit: 'Walking', lodging: 'Atlas Riads Collection' },
-      { day: 3, date: d(3), location: 'Marrakech — Cooking & Gardens', activities: ['Sunrise Majorelle Garden visit (before crowds)', 'Private Moroccan cooking class — tagine, couscous, msemen', 'Afternoon: Hammam and spa', 'Evening: Mouassine neighbourhood dinner'], transit: 'Walking + petits taxis', lodging: 'Atlas Riads Collection' },
-      { day: 4, date: d(4), location: 'Atlas Mountains Day Trip', activities: ['Drive into the High Atlas (Ourika Valley)', 'Hike to Setti Fatma waterfalls', 'Lunch with Berber family', 'Return via Asni weekly market'], transit: 'Private van', lodging: 'Atlas Riads Collection' },
-      { day: 5, date: d(5), location: 'Essaouira', activities: ['Morning drive to coastal Essaouira (2.5h)', 'Blue-and-white medina wander', 'Fish lunch at the port', 'Sunset on the Skala ramparts'], transit: 'Private van', lodging: 'Heure Bleue Palais, Essaouira' },
-      { day: 6, date: d(6), location: 'Essaouira → Marrakech', activities: ['Morning: Gnawa music walk in the medina', 'Argan cooperative visit — cold-press demo', 'Return to Marrakech by midday', 'Free afternoon for last shopping'], transit: 'Private van', lodging: 'Atlas Riads Collection' },
-      { day: 7, date: d(7), location: 'Marrakech — Food Market Day', activities: ['Mellah (Jewish quarter) food market at dawn', 'Orange juice and sfenj breakfast in the square', 'Olive and preserved lemon stalls tour', 'Private dinner: 6-course Moroccan feast at the riad'], transit: 'Walking', lodging: 'Atlas Riads Collection' },
-      { day: 8, date: d(8), location: 'Fès day trip (optional) or Marrakech free', activities: ['Optional: first flight to Fès for a day trip (Blue Gate, tanneries)', 'Or: leisure morning, rooftop breakfast', 'Afternoon: Yves Saint Laurent Museum', 'Farewell dinner at Naranj rooftop'], transit: 'Domestic flight or local', lodging: 'Atlas Riads Collection' },
-      { day: 9, date: d(9), location: 'Marrakech → Departure', activities: ['Morning hammam for last time', 'Transfer to airport', 'Departures'], transit: 'Airport transfer', lodging: 'None (departure day)' },
-    ];
-  },
-  nosara: (start) => {
-    const base = new Date(start);
-    const d = (n: number) => new Date(base.getTime() + (n - 1) * 86400000).toISOString().slice(0, 10);
-    return [
-      { day: 1, date: d(1), location: 'Nosara, Costa Rica', activities: ['Arrive at Nosara airstrip or transfer from SJO', 'Check in to beachfront villa', 'Sunset surf session at Playa Guiones', 'Welcome BBQ at the villa'], transit: 'Charter flight or private transfer from SJO', lodging: 'Playa Guiones Villa (8 pax)' },
-      { day: 2, date: d(2), location: 'Nosara — Surf Foundations', activities: ['6am: guided surf lesson at Playa Guiones (2h)', 'Post-surf smoothie bowls at the villa', 'Afternoon: yoga session at Bodhi Tree Yoga Resort', 'Evening: traditional casado dinner at local soda'], transit: 'Walking to beach', lodging: 'Playa Guiones Villa' },
-      { day: 3, date: d(3), location: 'Nosara — Advanced Surf + Sauna', activities: ['Dawn patrol surf — intermediate group splits off to boat trip', 'Midday: traditional Finnish sauna at Iguana Sauna', 'Cold plunge in the ocean', 'Afternoon: stand-up paddleboard tour of mangroves'], transit: 'Walking / bikes', lodging: 'Playa Guiones Villa' },
-      { day: 4, date: d(4), location: 'Nosara — Wellness Day', activities: ['Morning meditation on the beach (sunrise)', 'Full-day at leisure — surfing, reading, hammock', 'Afternoon: massage at Harmony Hotel spa', 'Group dinner at La Luna restaurant'], transit: 'None', lodging: 'Playa Guiones Villa' },
-      { day: 5, date: d(5), location: 'Nicoya Peninsula Exploration', activities: ['Boat trip to Isla Gitana for snorkeling', 'Sea turtle nesting site visit (seasonal)', 'Beach lunch on a secluded cove', 'Return for sunset sauna session'], transit: 'Boat tour', lodging: 'Playa Guiones Villa' },
-      { day: 6, date: d(6), location: 'Nosara — Final Surf', activities: ['Last morning surf competition among the group', 'Awards breakfast: best wipeout and best wave', 'Pack up and final swim', 'Afternoon transfers to SJO for departures'], transit: 'Private transfer to San José', lodging: 'None (departure day)' },
-    ];
+  handler: async ({ destination, focus }: { destination: string; focus?: string }) => {
+    const focusClause = focus ? ` ${focus}` : ' best time to visit activities logistics tips permits';
+    const results = await tavilySearch(
+      `${destination} travel guide${focusClause}`,
+      6
+    );
+    return { destination, results };
   },
 };
+
+const web_search_operators: ToolDef = {
+  name: 'web_search_operators',
+  description: 'Search the web for local tour operators in a given destination. Returns raw search results with company names, contacts, and descriptions. Call add_operator to save promising ones.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      location: { type: 'string', description: 'Country, region, or city to search (e.g. Patagonia, Bali, Marrakech)' },
+      specialty: { type: 'string', description: 'Trip style to filter by (hiking, beach, safari, cultural, wellness, culinary, expedition)' },
+    },
+    required: ['location'],
+  },
+  handler: async ({ location, specialty }: { location: string; specialty?: string }) => {
+    const styleClause = specialty ? ` ${specialty}` : '';
+    const [generalResults, contactResults] = await Promise.all([
+      tavilySearch(`local tour operators ${location}${styleClause} travel company guide services`, 5),
+      tavilySearch(`${location}${styleClause} tour company contact email booking`, 4),
+    ]);
+    return {
+      location,
+      note: 'Review these results and call add_operator for any worth adding to the database.',
+      generalResults,
+      contactResults,
+    };
+  },
+};
+
+const add_operator: ToolDef = {
+  name: 'add_operator',
+  description: 'Add a newly discovered operator to the Wanderkit database. Use after finding promising operators via web_search_operators.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      company: { type: 'string' },
+      contactName: { type: 'string' },
+      email: { type: 'string' },
+      whatsapp: { type: 'string' },
+      country: { type: 'string' },
+      region: { type: 'string' },
+      specialties: { type: 'array', items: { type: 'string' } },
+      rating: { type: 'number' },
+      responseHours: { type: 'number' },
+      priceTier: { type: 'string', enum: ['$', '$$', '$$$'] },
+      notes: { type: 'string' },
+    },
+    required: ['company', 'contactName', 'country', 'region'],
+  },
+  handler: (input) => {
+    const newId = `op_web_${Date.now()}`;
+    const newOp = {
+      id: newId,
+      company: input.company,
+      contactName: input.contactName,
+      email: input.email ?? '',
+      whatsapp: input.whatsapp ?? '',
+      country: input.country,
+      region: input.region,
+      specialties: input.specialties ?? [],
+      rating: input.rating ?? 0,
+      responseHours: input.responseHours ?? 24,
+      priceTier: input.priceTier ?? '$$',
+      notes: input.notes ?? '',
+    };
+    operators.push(newOp as any);
+    return {
+      added: true,
+      id: newId,
+      company: input.company,
+      note: 'Operator added to the Wanderkit database. They will now appear in the Operators list.',
+    };
+  },
+};
+
+// ─── Itinerary tools ────────────────────────────────────────────────────────
 
 const generate_itinerary: ToolDef = {
   name: 'generate_itinerary',
   description:
-    'Generate a day-by-day itinerary for a trip. Returns an array of ItineraryDay objects based on the destination, style, and dates. Does NOT save — call save_itinerary after reviewing.',
+    'Research a destination and return real web results to inform a day-by-day itinerary. Use the results plus your own knowledge to write the full itinerary, then call save_itinerary when the admin approves.',
   input_schema: {
     type: 'object',
     properties: {
@@ -443,25 +504,33 @@ const generate_itinerary: ToolDef = {
     },
     required: ['trip_id'],
   },
-  handler: ({ trip_id }) => {
+  handler: async ({ trip_id, style_notes }: { trip_id: string; style_notes?: string }) => {
     const trip = findById(trips, trip_id);
     if (!trip) return { error: 'Trip not found' };
-    const key = Object.keys(DESTINATION_ITINERARIES).find((k) =>
-      trip.destination.toLowerCase().includes(k) || trip.id.toLowerCase().includes(k)
-    );
-    const itinerary = key ? DESTINATION_ITINERARIES[key](trip.startDate) : null;
-    if (!itinerary) {
-      return {
-        error: `No template for "${trip.destination}". Available: ${Object.keys(DESTINATION_ITINERARIES).join(', ')}`,
-      };
-    }
+
+    const totalDays = Math.round(
+      (new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / 86400000
+    ) + 1;
+    const styleClause = trip.style.join(' ') + (style_notes ? ` ${style_notes}` : '');
+
+    const [itineraryResearch, logisticsResearch] = await Promise.all([
+      tavilySearch(`${trip.destination} ${totalDays} day itinerary ${styleClause} what to do`, 5),
+      tavilySearch(`${trip.destination} travel logistics getting around accommodation tips`, 4),
+    ]);
+
     return {
-      generated: true,
       trip_id,
       destination: trip.destination,
-      days: itinerary.length,
-      itinerary,
-      note: 'Preview only — call save_itinerary(trip_id, itinerary) to persist.',
+      startDate: trip.startDate,
+      endDate: trip.endDate,
+      totalDays,
+      groupSize: trip.groupSize,
+      style: trip.style,
+      mustHaves: trip.mustHaves,
+      budgetPerPerson: `$${(trip.budgetPerPerson / 100).toFixed(0)}/pp/day`,
+      itineraryResearch,
+      logisticsResearch,
+      instruction: `Use the research above plus your knowledge to write a ${totalDays}-day day-by-day itinerary. Present it clearly to the admin. When they approve, call save_itinerary with the full ItineraryDay array.`,
     };
   },
 };
@@ -508,6 +577,7 @@ const save_itinerary: ToolDef = {
 const ALL: Record<string, ToolDef> = {
   list_customers,
   list_influencers,
+  list_trips,
   search_operators,
   get_trip,
   list_trip_quotes,
@@ -520,6 +590,9 @@ const ALL: Record<string, ToolDef> = {
   get_travel_advisory,
   get_news,
   find_compatible_customers,
+  web_search_destination,
+  web_search_operators,
+  add_operator,
   generate_itinerary,
   save_itinerary,
 };

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { PageHeader } from '@/components/page-header';
 import { ItineraryEditor } from '@/components/itinerary-editor';
 import { Copy, Check, Eye, Sparkles, PencilLine, GripVertical } from 'lucide-react';
@@ -248,8 +249,8 @@ export default function NewTripLinkPage() {
               <span className={LABEL}>Cover image URL</span>
               <input className={INPUT} placeholder="https://…" value={coverImage} onChange={(e) => setCoverImage(e.target.value)} />
               {coverImage && (
-                <div className="mt-2 rounded-lg overflow-hidden h-44">
-                  <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
+                <div className="relative mt-2 rounded-lg overflow-hidden h-44">
+                  <Image src={coverImage} alt="Cover" fill className="object-cover" unoptimized />
                 </div>
               )}
             </label>

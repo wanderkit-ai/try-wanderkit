@@ -16,7 +16,9 @@ export default function AgentPage({
   const initialMessage = searchParams.message
     ? decodeURIComponent(searchParams.message)
     : searchParams.trip
-    ? `Build the itinerary for trip ${searchParams.trip}`
+    ? params.name === 'scout'
+      ? `Find operators for trip ${searchParams.trip}`
+      : `Research and build the itinerary for trip ${searchParams.trip}`
     : undefined;
 
   return (

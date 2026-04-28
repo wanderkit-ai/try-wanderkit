@@ -5,6 +5,7 @@ import { StatusPill } from '@/components/status-pill';
 import { TableShell, Th, Td } from '@/components/table-shell';
 import { trips, influencers, customers, findById } from '@/lib/mock-data';
 import { formatMoney } from '@/lib/utils';
+import { Plus } from 'lucide-react';
 
 export default function TripsPage() {
   return (
@@ -13,8 +14,17 @@ export default function TripsPage() {
         icon="✈️"
         title="Trips"
         description="Every brief in flight — from first interest to booked."
+        actions={
+          <Link
+            href="/trips/new"
+            className="inline-flex items-center gap-1.5 px-3 h-8 rounded bg-accent text-white text-xs font-medium hover:bg-accent/90 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
+            Create trip
+          </Link>
+        }
       />
-      <TableShell views={['Table', 'Pipeline']}>
+      <TableShell>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

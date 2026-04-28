@@ -12,7 +12,7 @@ export default function AgentsOverview() {
       <PageHeader
         icon="🤖"
         title="AI agents"
-        description="Five agents that turn raw customer interest into a booked trip — talking to influencers and operators while you sleep."
+        description="AI agents that research destinations and find operators — so you can focus on the trips, not the legwork."
       />
       <div className="px-12 pb-12 space-y-8">
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">

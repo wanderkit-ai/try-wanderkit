@@ -9,6 +9,7 @@ import {
   tripLinks,
   agentEvents,
   influencers,
+  quotes,
   findById,
 } from '@/lib/mock-data';
 import { formatRelative, formatMoney } from '@/lib/utils';
@@ -22,21 +23,32 @@ import {
   Activity,
 } from 'lucide-react';
 
+const JAMIE_ID = 'inf_jamie';
+
 export default function HomePage() {
-  const activeTrips = trips.filter((t) => t.status !== 'completed' && t.status !== 'cancelled');
+  const jamie = findById(influencers, JAMIE_ID);
+  const myTrips = trips.filter((t) => t.influencerId === JAMIE_ID);
+  const activeTrips = myTrips.filter((t) => t.status !== 'completed' && t.status !== 'cancelled');
+  const myCustomers = customers.filter((c) => c.influencerId === JAMIE_ID);
+  const myTripIds = new Set(myTrips.map((t) => t.id));
+  const usedOperatorIds = new Set(
+    quotes.filter((q) => myTripIds.has(q.tripId)).map((q) => q.operatorId)
+  );
+  const myOperators = operators.filter((o) => o.starred || usedOperatorIds.has(o.id));
+  const myLinks = tripLinks.filter((l) => l.influencerId === JAMIE_ID && l.status === 'live');
   const recentEvents = [...agentEvents].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 6);
 
   const stats = [
     { label: 'Active trips', value: activeTrips.length, icon: Plane, href: '/trips' },
-    { label: 'Customers', value: customers.length, icon: Users, href: '/people/customers' },
-    { label: 'Trip Links', value: tripLinks.filter((l) => l.status === 'live').length, icon: Link2, href: '/links' },
-    { label: 'Operators', value: operators.length, icon: Building2, href: '/people/operators' },
+    { label: 'Customers', value: myCustomers.length, icon: Users, href: '/people/customers' },
+    { label: 'Trip Links', value: myLinks.length, icon: Link2, href: '/links' },
+    { label: 'Operators', value: myOperators.length, icon: Building2, href: '/people/operators' },
   ];
 
   return (
     <>
       <PageHeader
-        title="Welcome back"
+        title={jamie ? `Welcome back, ${jamie.name.split(' ')[0]}` : 'Welcome back'}
         description="Five AI agents are running in the background. Here's what they're working on."
       />
 
@@ -74,34 +86,31 @@ export default function HomePage() {
               </Link>
             </div>
             <div className="surface divide-y divide-border">
-              {activeTrips.slice(0, 5).map((t) => {
-                const inf = findById(influencers, t.influencerId);
-                return (
-                  <Link
-                    key={t.id}
-                    href={`/trips/${t.id}`}
-                    className="flex items-center px-4 h-12 hover:bg-hover gap-3"
-                  >
-                    <Plane className="w-4 h-4 text-ink2" strokeWidth={1.75} />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm text-ink truncate">{t.title}</div>
-                      <div className="text-xs text-muted truncate">{t.destination}</div>
+              {activeTrips.slice(0, 5).map((t) => (
+                <Link
+                  key={t.id}
+                  href={`/trips/${t.id}`}
+                  className="flex items-center px-4 h-12 hover:bg-hover gap-3"
+                >
+                  <Plane className="w-4 h-4 text-ink2" strokeWidth={1.75} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-ink truncate">{t.title}</div>
+                    <div className="text-xs text-muted truncate">{t.destination}</div>
+                  </div>
+                  {jamie && (
+                    <div className="flex items-center gap-1.5">
+                      <Avatar name={jamie.name} color={jamie.avatarColor} size={20} />
+                      <span className="text-xs text-ink2 hidden sm:inline">
+                        {jamie.handle}
+                      </span>
                     </div>
-                    {inf && (
-                      <div className="flex items-center gap-1.5">
-                        <Avatar name={inf.name} color={inf.avatarColor} size={20} />
-                        <span className="text-xs text-ink2 hidden sm:inline">
-                          {inf.handle}
-                        </span>
-                      </div>
-                    )}
-                    <span className="text-xs text-ink2 font-mono tabular-nums">
-                      {formatMoney(t.budgetPerPerson)}/pp
-                    </span>
-                    <StatusPill status={t.status} />
-                  </Link>
-                );
-              })}
+                  )}
+                  <span className="text-xs text-ink2 font-mono tabular-nums">
+                    {formatMoney(t.budgetPerPerson)}/pp
+                  </span>
+                  <StatusPill status={t.status} />
+                </Link>
+              ))}
             </div>
           </div>
 

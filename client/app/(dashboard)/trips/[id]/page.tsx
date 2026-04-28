@@ -447,14 +447,14 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
               className="btn btn-outline w-full mt-3 h-9"
             >
               <Bot className="w-3.5 h-3.5" strokeWidth={1.75} />
-              Open in Itinerary
+              Research Itinerary
             </Link>
             <Link
-              href={`/agents/negotiator?trip=${trip.id}`}
+              href={`/agents/scout?trip=${trip.id}`}
               className="btn btn-outline w-full mt-2 h-9"
             >
               <Bot className="w-3.5 h-3.5" strokeWidth={1.75} />
-              Open in Negotiator
+              Scout Operators
             </Link>
           </div>
         </div>

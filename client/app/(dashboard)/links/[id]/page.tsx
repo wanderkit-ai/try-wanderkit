@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import { Avatar } from '@/components/avatar';
@@ -69,8 +70,8 @@ export default function TripLinkDetailPage({ params }: { params: { id: string } 
         <div className="space-y-5">
           {/* Cover image */}
           {link.coverImage && (
-            <div className="rounded-xl overflow-hidden h-56">
-              <img src={link.coverImage} alt={link.title} className="w-full h-full object-cover" />
+            <div className="relative rounded-xl overflow-hidden h-56">
+              <Image src={link.coverImage} alt={link.title} fill className="object-cover" unoptimized />
             </div>
           )}
 

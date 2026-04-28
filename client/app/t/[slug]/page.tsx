@@ -1,11 +1,16 @@
-import { notFound } from 'next/navigation';
+import Image from 'next/image';
 import { tripLinks, influencers, findById } from '@/lib/mock-data';
 import { TripLinkForm } from './form';
+import { DynamicTripPage } from './dynamic-page';
 import { MapPin, CalendarDays, Users, Bed, Train } from 'lucide-react';
 
 export default function PublicTripLinkPage({ params }: { params: { slug: string } }) {
-  const link = tripLinks.find((l) => l.slug === params.slug);
-  if (!link || link.status === 'draft') notFound();
+  const link = tripLinks.find((l) => l.slug === params.slug && l.status !== 'draft');
+
+  // For dynamically created trips (saved to localStorage from /trips/new), delegate to client component
+  if (!link) {
+    return <DynamicTripPage slug={params.slug} />;
+  }
 
   const inf = findById(influencers, link.influencerId);
   const spotsLeft = link.capacity - link.responseCount;
@@ -25,8 +30,8 @@ export default function PublicTripLinkPage({ params }: { params: { slug: string 
       <div className="relative">
         {link.coverImage ? (
           <>
-            <div className="h-72 sm:h-96 overflow-hidden">
-              <img src={link.coverImage} alt={link.title} className="w-full h-full object-cover" />
+            <div className="relative h-72 sm:h-96 overflow-hidden">
+              <Image src={link.coverImage} alt={link.title} fill className="object-cover" unoptimized />
             </div>
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
@@ -114,8 +119,8 @@ export default function PublicTripLinkPage({ params }: { params: { slug: string 
         {link.galleryImages && link.galleryImages.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {link.galleryImages.map((url, i) => (
-              <div key={i} className="aspect-square rounded-lg overflow-hidden bg-stone-100">
-                <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+              <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-stone-100">
+                <Image src={url} alt={`Photo ${i + 1}`} fill className="object-cover" unoptimized />
               </div>
             ))}
           </div>
