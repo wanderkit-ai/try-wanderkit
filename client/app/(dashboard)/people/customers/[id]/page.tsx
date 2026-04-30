@@ -130,7 +130,6 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
         icon="👤"
         title={customer.name}
         crumbs={[
-          { label: 'People', href: '/people' },
           { label: 'Customers', href: '/people/customers' },
           { label: customer.name },
         ]}
@@ -229,11 +228,11 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
 
         {/* Open in Compliance */}
         <Link
-          href={`/agents/compliance?customer=${customer.id}`}
+          href={`/agents/itinerary?customer=${customer.id}`}
           className="btn btn-outline h-9 w-fit"
         >
           <Bot className="w-3.5 h-3.5" strokeWidth={1.75} />
-          Open in Compliance
+          Research a trip for this customer
         </Link>
       </div>
     </>

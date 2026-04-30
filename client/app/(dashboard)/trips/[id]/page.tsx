@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/page-header';
 import { Avatar } from '@/components/avatar';
 import { StatusPill } from '@/components/status-pill';
 import { SendProposalBtn } from './send-proposal-btn';
+import { ConnectorsPanel } from './connectors-panel';
 import {
   trips,
   influencers,
@@ -12,10 +13,12 @@ import {
   quotes,
   messages,
   agentEvents,
+  waitlist,
   findById,
 } from '@/lib/mock-data';
 import { formatMoney, formatRelative } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
+import type { Customer } from '@/lib/types';
 import {
   Calendar,
   MapPin,
@@ -29,6 +32,10 @@ import {
   MapPinned,
   Train,
   Bed,
+  Clock,
+  UserCheck,
+  UserX,
+  Plug2,
 } from 'lucide-react';
 
 export default function TripDetailPage({ params }: { params: { id: string } }) {
@@ -36,13 +43,20 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
   if (!trip) notFound();
 
   const inf = findById(influencers, trip.influencerId);
-  const cs = trip.customerIds.map((id) => findById(customers, id)).filter(Boolean) as any[];
+  const members = trip.customerIds
+    .map((id) => findById(customers, id))
+    .filter((customer): customer is Customer => Boolean(customer));
+  const tripWaitlist = waitlist.filter((w) => w.tripId === trip.id);
   const tripQuotes = quotes.filter((q) => q.tripId === trip.id);
   const tripMessages = messages.filter((m) => m.tripId === trip.id);
   const tripEvents = agentEvents.filter((e) => e.tripId === trip.id);
 
   const stages = ['brief', 'sourcing', 'quoting', 'approved', 'booked'] as const;
   const currentIdx = stages.indexOf(trip.status as any);
+
+  const bookedSeats = members.reduce((acc, m) => acc + Math.max(m.groupSize ?? 1, 1), 0);
+  const waitlistedSeats = tripWaitlist.reduce((acc, w) => acc + Math.max(w.partySize, 1), 0);
+  const spotsLeft = Math.max(trip.groupSize - bookedSeats, 0);
 
   return (
     <>
@@ -79,7 +93,12 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
           </div>
 
           <Prop icon={UsersIcon} label="Group size" />
-          <div className="text-ink">{trip.groupSize}</div>
+          <div className="text-ink">
+            {bookedSeats} / {trip.groupSize} spots booked
+            {tripWaitlist.length > 0 && (
+              <span className="text-muted ml-2">· {waitlistedSeats} waiting</span>
+            )}
+          </div>
 
           <Prop icon={DollarSign} label="Budget / pp" />
           <div className="text-ink font-mono tabular-nums text-xs">
@@ -95,16 +114,102 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
           <div className="flex gap-1 flex-wrap">
             {trip.mustHaves.map((m) => <span key={m} className="chip">{m}</span>)}
           </div>
+        </div>
 
-          <Prop icon={UsersIcon} label="Travelers" />
-          <div className="flex flex-col gap-1">
-            {cs.map((c) => (
-              <div key={c.id} className="flex items-center gap-2">
-                <Avatar name={c.name} color={c.avatarColor} size={20} />
-                <span className="text-ink">{c.name}</span>
-                <span className="text-muted text-xs">{c.email}</span>
-              </div>
-            ))}
+        {/* Members + Waitlist */}
+        <div className="grid grid-cols-2 gap-6 mb-8">
+          {/* Members */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-medium text-ink2 uppercase tracking-wide">
+                Members
+              </h2>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-2xs font-medium bg-[#d3eada] text-[#1f5742]">
+                {members.length} booking{members.length !== 1 ? 's' : ''}
+              </span>
+              {spotsLeft > 0 && (
+                <span className="text-2xs text-muted">{spotsLeft} spot{spotsLeft !== 1 ? 's' : ''} left</span>
+              )}
+            </div>
+            <div className="surface divide-y divide-border">
+              {members.length === 0 && (
+                <div className="p-4 text-sm text-muted flex items-center gap-2">
+                  <UserCheck className="w-4 h-4" strokeWidth={1.5} />
+                  No members yet.
+                </div>
+              )}
+              {members.map((m) => (
+                <div key={m.id} className="p-3 flex items-start gap-3">
+                  <Avatar name={m.name} color={m.avatarColor} size={32} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-sm font-medium text-ink">{m.name}</span>
+                      <StatusPill status={m.status} />
+                    </div>
+                    <div className="text-xs text-muted mt-0.5">{m.email}</div>
+                    <div className="flex items-center gap-3 mt-1 text-2xs text-muted">
+                      <span>{m.city}, {m.country}</span>
+                      <span className="flex items-center gap-0.5">
+                        <UsersIcon className="w-2.5 h-2.5" strokeWidth={1.75} />
+                        Party of {m.groupSize}
+                      </span>
+                    </div>
+                  </div>
+                  <Link
+                    href={`/people/customers/${m.id}`}
+                    className="text-2xs text-accent underline underline-offset-2 shrink-0"
+                  >
+                    View
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Waitlist */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-medium text-ink2 uppercase tracking-wide">
+                Waitlist
+              </h2>
+              {tripWaitlist.length > 0 && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-2xs font-medium bg-[#fff3d4] text-[#7a5410]">
+                  {tripWaitlist.length} request{tripWaitlist.length !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+            <div className="surface divide-y divide-border">
+              {tripWaitlist.length === 0 && (
+                <div className="p-4 text-sm text-muted flex items-center gap-2">
+                  <UserX className="w-4 h-4" strokeWidth={1.5} />
+                  No one on the waitlist.
+                </div>
+              )}
+              {tripWaitlist.map((w, i) => (
+                <div key={w.id} className="p-3 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-hover text-muted grid place-items-center text-xs font-mono font-medium shrink-0">
+                    #{i + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-ink">{w.name}</div>
+                    <div className="text-xs text-muted mt-0.5">{w.email}</div>
+                    <div className="flex items-center gap-3 mt-1 text-2xs text-muted">
+                      <span className="flex items-center gap-0.5">
+                        <Clock className="w-2.5 h-2.5" strokeWidth={1.75} />
+                        {w.joinedAt}
+                      </span>
+                      <span className="flex items-center gap-0.5">
+                        <UsersIcon className="w-2.5 h-2.5" strokeWidth={1.75} />
+                        Party of {w.partySize}
+                      </span>
+                    </div>
+                    {w.notes && (
+                      <div className="mt-1 text-2xs text-ink2 italic">{w.notes}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -198,7 +303,7 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-6 mb-8">
           {/* Quotes */}
           <div className="col-span-2">
             <h2 className="text-sm font-medium text-ink2 uppercase tracking-wide mb-2">
@@ -342,16 +447,33 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
               className="btn btn-outline w-full mt-3 h-9"
             >
               <Bot className="w-3.5 h-3.5" strokeWidth={1.75} />
-              Open in Itinerary
+              Research Itinerary
             </Link>
             <Link
-              href={`/agents/negotiator?trip=${trip.id}`}
+              href={`/agents/scout?trip=${trip.id}`}
               className="btn btn-outline w-full mt-2 h-9"
             >
               <Bot className="w-3.5 h-3.5" strokeWidth={1.75} />
-              Open in Negotiator
+              Scout Operators
             </Link>
           </div>
+        </div>
+
+        {/* Connectors */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-sm font-medium text-ink2 uppercase tracking-wide">
+              Connectors
+            </h2>
+            <span className="inline-flex items-center gap-1 text-2xs font-medium px-1.5 py-0.5 rounded bg-[#eef] text-[#446]">
+              <Plug2 className="w-2.5 h-2.5" strokeWidth={2} />
+              MCP
+            </span>
+          </div>
+          <p className="text-xs text-muted mb-3">
+            Connect external tools so agents can read and write on your behalf.
+          </p>
+          <ConnectorsPanel tripId={trip.id} />
         </div>
       </div>
     </>

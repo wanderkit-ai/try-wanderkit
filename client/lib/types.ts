@@ -80,6 +80,7 @@ export interface Operator {
   responseHours: number;
   priceTier: '$' | '$$' | '$$$';
   notes?: string;
+  starred?: boolean;
 }
 
 export interface TripBrief {
@@ -128,7 +129,57 @@ export interface Message {
   fromAgent?: AgentName;
 }
 
-export type AgentName = 'concierge' | 'itinerary' | 'matchmaker' | 'negotiator' | 'booker' | 'compliance' | 'payments' | 'social';
+export type JoinQuestionKey =
+  | 'phone' | 'dateOfBirth' | 'nationality' | 'passport'
+  | 'partySize' | 'roomPreference' | 'roommateName'
+  | 'dietaryRestrictions' | 'allergies' | 'mobilityNeeds'
+  | 'fitnessLevel' | 'priorExperience' | 'surfLevel'
+  | 'emergencyContact' | 'travelInsurance'
+  | 'whyInterested' | 'heardAboutUs' | 'tshirtSize' | 'specialRequests';
+
+export interface JoinQuestion {
+  key: JoinQuestionKey;
+  enabled: boolean;
+  required: boolean;
+}
+
+export interface TripLink {
+  id: string;
+  slug: string;
+  influencerId: string;
+
+  title: string;
+  destination: string;
+  startDate: string;
+  endDate: string;
+  style: TripStyle[];
+  capacity: number;
+
+  audienceDescription: string;
+  coverImage?: string;
+  galleryImages?: string[];
+
+  itinerary: ItineraryDay[];
+  itinerarySource: 'manual' | 'ai' | 'mixed';
+
+  joinQuestions: JoinQuestion[];
+
+  status: 'draft' | 'live' | 'closed';
+  createdAt: string;
+  responseCount: number;
+}
+
+export interface WaitlistEntry {
+  id: string;
+  tripId: string;
+  name: string;
+  email: string;
+  partySize: number;
+  joinedAt: string;
+  notes?: string;
+}
+
+export type AgentName = 'itinerary' | 'scout';
 
 export interface AgentEvent {
   id: string;
