@@ -43,3 +43,18 @@ def to_anthropic_tools(defs: list[ToolDef]) -> list[dict[str, Any]]:
         }
         for tool in defs
     ]
+
+
+def to_openai_tools(defs: list[ToolDef]) -> list[dict[str, Any]]:
+    """Convert ToolDef objects into the shape OpenAI's tool-calling API expects."""
+    return [
+        {
+            "type": "function",
+            "function": {
+                "name": tool.name,
+                "description": tool.description,
+                "parameters": tool.input_schema,
+            },
+        }
+        for tool in defs
+    ]

@@ -8,21 +8,30 @@ resolves tools by name against ALL_TOOLS.
 
 from __future__ import annotations
 
-from ._shared import ToolDef, ToolHandler, to_anthropic_tools
+from ._shared import ToolDef, ToolHandler, to_anthropic_tools, to_openai_tools
 from ._shared import tools_for as _tools_for
 from . import (
+    activities,
     compliance,
     crm,
     documents,
+    email_resend,
     flights,
+    flights_amadeus,
+    gsheets,
+    hotels_amadeus,
     intelligence,
     itinerary,
     lodging,
     messaging,
     operators,
     payments,
+    scrape_firecrawl,
+    slack,
     social,
+    telegram,
     trips,
+    weather_openmeteo,
 )
 
 # Order matters only for the agent-startup log — tools resolve by name.
@@ -33,12 +42,21 @@ _DOMAIN_MODULES = (
     messaging,
     itinerary,
     flights,
+    flights_amadeus,
     lodging,
+    hotels_amadeus,
+    weather_openmeteo,
+    email_resend,
+    telegram,
     intelligence,
     compliance,
     documents,
     payments,
     social,
+    activities,
+    slack,
+    scrape_firecrawl,
+    gsheets,
 )
 
 
@@ -60,4 +78,11 @@ def tools_for(names: list[str]) -> list[ToolDef]:
     return _tools_for(names, ALL_TOOLS)
 
 
-__all__ = ["ALL_TOOLS", "ToolDef", "ToolHandler", "tools_for", "to_anthropic_tools"]
+__all__ = [
+    "ALL_TOOLS",
+    "ToolDef",
+    "ToolHandler",
+    "tools_for",
+    "to_anthropic_tools",
+    "to_openai_tools",
+]
