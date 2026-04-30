@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>{{ request.destination }} Itinerary</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; color: #2a2723; line-height: 1.5; margin: 0; padding: 24px; background: #fbfbfa;">
+    <main style="max-width: 720px; margin: 0 auto; background: #ffffff; border: 1px solid #e3e1de; border-radius: 8px; padding: 24px;">
+      <p style="font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: #8b8782; margin: 0 0 8px;">Wanderkit itinerary</p>
+      <h1 style="font-size: 28px; line-height: 1.15; margin: 0 0 8px;">{{ request.destination }}</h1>
+      <p style="margin: 0 0 20px; color: #5e5a55;">{{ request.start_date }} to {{ request.end_date }} for {{ request.travelers }} traveler{% if request.travelers != 1 %}s{% endif %}</p>
+
+      <section style="margin-bottom: 24px;">
+        <h2 style="font-size: 16px; margin: 0 0 8px;">Summary</h2>
+        <p style="margin: 0;">{{ itinerary.summary }}</p>
+        {% if itinerary.total_cost %}
+          <p style="margin: 8px 0 0; color: #5e5a55;">Estimated total: {{ itinerary.total_cost }}</p>
+        {% endif %}
+      </section>
+
+      <section style="margin-bottom: 24px;">
+        <h2 style="font-size: 16px; margin: 0 0 8px;">Flight Options</h2>
+        {% set flight_offers = travel_data.flights.offers if travel_data.flights.offers is defined else [] %}
+        {% if flight_offers %}
+          <ul style="padding-left: 18px; margin: 0;">
+            {% for offer in flight_offers[:3] %}
+              <li style="margin-bottom: 8px;">
+                {{ offer.airlines | join(", ") }} -
+                {{ offer.price.total }} {{ offer.price.currency }}
+                {% if offer.stops is not none %} - {{ offer.stops }} stop{% if offer.stops != 1 %}s{% endif %}{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p style="margin: 0; color: #8b8782;">No flight offers were returned.</p>
+        {% endif %}
+      </section>
+
+      <section style="margin-bottom: 24px;">
+        <h2 style="font-size: 16px; margin: 0 0 8px;">Hotel Options</h2>
+        {% set hotel_offers = travel_data.hotels.hotels if travel_data.hotels.hotels is defined else [] %}
+        {% if hotel_offers %}
+          <ul style="padding-left: 18px; margin: 0;">
+            {% for hotel in hotel_offers[:3] %}
+              <li style="margin-bottom: 8px;">
+                {{ hotel.name }}
+                {% if hotel.price.total is defined %} - {{ hotel.price.total }} {{ hotel.price.currency }}{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p style="margin: 0; color: #8b8782;">No hotel offers were returned.</p>
+        {% endif %}
+      </section>
+
+      <section>
+        <h2 style="font-size: 16px; margin: 0 0 8px;">Day by Day</h2>
+        {% for day in itinerary.days %}
+          <article style="border-top: 1px solid #e3e1de; padding-top: 14px; margin-top: 14px;">
+            <h3 style="font-size: 15px; margin: 0 0 6px;">Day {{ day.day }} - {{ day.location }} <span style="color: #8b8782; font-weight: normal;">{{ day.date }}</span></h3>
+            <p style="margin: 0 0 4px;"><strong>Morning:</strong> {{ day.morning }}</p>
+            <p style="margin: 0 0 4px;"><strong>Afternoon:</strong> {{ day.afternoon }}</p>
+            <p style="margin: 0 0 4px;"><strong>Evening:</strong> {{ day.evening }}</p>
+            {% if day.lodging %}
+              <p style="margin: 0; color: #5e5a55;"><strong>Lodging:</strong> {{ day.lodging }}</p>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </section>
+
+      {% if itinerary.booking_notes %}
+        <section style="margin-top: 24px;">
+          <h2 style="font-size: 16px; margin: 0 0 8px;">Booking Notes</h2>
+          <ul style="padding-left: 18px; margin: 0;">
+            {% for note in itinerary.booking_notes %}
+              <li>{{ note }}</li>
+            {% endfor %}
+          </ul>
+        </section>
+      {% endif %}
+    </main>
+  </body>
+</html>

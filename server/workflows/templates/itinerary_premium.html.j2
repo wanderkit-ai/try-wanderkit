@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium Itinerary — {{ request.destination }}</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: #f4f4f5; margin: 0; padding: 24px; color: #18181b; }
+  .container { max-width: 680px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+  .hero { background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%); color: #fff; padding: 36px 32px; }
+  .hero h1 { margin: 0 0 6px; font-size: 26px; font-weight: 700; }
+  .hero .meta { font-size: 14px; opacity: 0.85; }
+  .badge { display: inline-block; background: rgba(255,255,255,.2); border-radius: 20px; padding: 3px 10px; font-size: 12px; margin-top: 10px; }
+  .section { padding: 24px 32px; border-bottom: 1px solid #f1f1f1; }
+  .section:last-child { border-bottom: none; }
+  h2 { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #6d28d9; margin: 0 0 14px; }
+  .summary-box { background: #faf5ff; border-left: 4px solid #7c3aed; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 14px; line-height: 1.6; color: #3f3f46; }
+  .cost-tag { float: right; background: #7c3aed; color: #fff; border-radius: 20px; padding: 2px 12px; font-size: 13px; font-weight: 600; }
+  .highlights { list-style: none; margin: 0; padding: 0; }
+  .highlights li { padding: 5px 0 5px 20px; position: relative; font-size: 14px; color: #3f3f46; }
+  .highlights li::before { content: "★"; position: absolute; left: 0; color: #7c3aed; font-size: 12px; top: 6px; }
+  .scored-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .scored-card { background: #f9fafb; border: 1px solid #e4e4e7; border-radius: 8px; padding: 12px 14px; }
+  .scored-card .score { font-size: 22px; font-weight: 800; color: #7c3aed; float: right; }
+  .scored-card .label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #a1a1aa; margin-bottom: 4px; }
+  .scored-card .name { font-size: 13px; font-weight: 600; color: #18181b; }
+  .scored-card .rationale { font-size: 12px; color: #71717a; margin-top: 4px; line-height: 1.4; }
+  .weather-strip { display: flex; gap: 8px; flex-wrap: wrap; }
+  .weather-chip { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 20px; padding: 4px 12px; font-size: 12px; color: #1d4ed8; }
+  .day-card { margin-bottom: 16px; border: 1px solid #e4e4e7; border-radius: 10px; overflow: hidden; }
+  .day-header { background: #faf5ff; padding: 10px 16px; display: flex; align-items: center; gap: 10px; }
+  .day-num { background: #7c3aed; color: #fff; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .day-title { font-weight: 600; font-size: 14px; }
+  .day-weather { font-size: 12px; color: #6d28d9; margin-left: auto; font-style: italic; }
+  .day-body { padding: 12px 16px; font-size: 13px; }
+  .time-block { display: flex; gap: 10px; margin-bottom: 8px; }
+  .time-label { width: 70px; flex-shrink: 0; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #a1a1aa; padding-top: 1px; }
+  .time-content { color: #3f3f46; line-height: 1.5; }
+  .lodging-row { border-top: 1px solid #f4f4f5; margin-top: 8px; padding-top: 8px; font-size: 12px; color: #71717a; }
+  .featured-tag { display: inline-block; background: #fef3c7; color: #92400e; border-radius: 4px; padding: 1px 6px; font-size: 11px; margin-left: 6px; }
+  .flight-row, .hotel-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #f4f4f5; font-size: 13px; }
+  .flight-row:last-child, .hotel-row:last-child { border-bottom: none; }
+  .option-label { font-weight: 600; color: #18181b; }
+  .option-detail { color: #71717a; font-size: 12px; margin-top: 2px; }
+  .option-price { font-weight: 700; color: #7c3aed; white-space: nowrap; }
+  .note-item { padding: 5px 0 5px 18px; position: relative; font-size: 13px; color: #3f3f46; }
+  .note-item::before { content: "→"; position: absolute; left: 0; color: #7c3aed; }
+  .footer { text-align: center; font-size: 11px; color: #a1a1aa; padding: 16px 32px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="hero">
+    <div class="cost-tag">
+      {% if itinerary.total_cost %}~${{ "{:,.0f}".format(itinerary.total_cost) }}{% else %}TBD{% endif %}
+    </div>
+    <h1>{{ request.destination }}</h1>
+    <div class="meta">{{ request.start_date }} → {{ request.end_date }} &nbsp;·&nbsp; {{ request.travelers }} traveler{% if request.travelers != 1 %}s{% endif %}</div>
+    <div class="badge">✦ Premium Itinerary</div>
+  </div>
+
+  {% if itinerary.summary %}
+  <div class="section">
+    <h2>Trip Overview</h2>
+    <div class="summary-box">{{ itinerary.summary }}</div>
+    {% if itinerary.highlights %}
+    <ul class="highlights" style="margin-top:12px;">
+      {% for h in itinerary.highlights %}<li>{{ h }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if scored %}
+  <div class="section">
+    <h2>Scored Recommendations</h2>
+    <div class="scored-grid">
+      {% for pick in (scored.top_flights or [])[:2] %}
+      <div class="scored-card">
+        <div class="score">{{ pick.score }}</div>
+        <div class="label">Flight</div>
+        <div class="name">{{ pick.item.airline | default(pick.item.carrier, true) | default('Flight option', true) }}</div>
+        <div class="rationale">{{ pick.rationale }}</div>
+      </div>
+      {% endfor %}
+      {% for pick in (scored.top_hotels or [])[:2] %}
+      <div class="scored-card">
+        <div class="score">{{ pick.score }}</div>
+        <div class="label">Hotel</div>
+        <div class="name">{{ pick.item.name | default('Hotel option', true) }}</div>
+        <div class="rationale">{{ pick.rationale }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% set weather = travel_data.weather %}
+  {% if weather and weather.daily %}
+  <div class="section">
+    <h2>Weather Forecast</h2>
+    <div class="weather-strip">
+      {% for i in range([weather.daily.time | length, 7] | min) %}
+      <div class="weather-chip">
+        {{ weather.daily.time[i] }}
+        {% if weather.daily.temperature_2m_max %} · {{ weather.daily.temperature_2m_max[i] | round | int }}°{% endif %}
+        {% if weather.daily.precipitation_sum %} · {{ weather.daily.precipitation_sum[i] }}mm{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% set activities_data = travel_data.activities %}
+  {% if activities_data and activities_data.activities %}
+  <div class="section">
+    <h2>Top Activities</h2>
+    {% for act in activities_data.activities[:5] %}
+    <div style="padding: 8px 0; border-bottom: 1px solid #f4f4f5; font-size: 13px;">
+      <span style="font-weight:600;">{{ act.name }}</span>
+      {% if act.category %}<span style="color:#a1a1aa; font-size:12px;"> · {{ act.category }}</span>{% endif %}
+      {% if act.rating %}<span style="color:#7c3aed; font-size:12px;"> · ★ {{ act.rating }}</span>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if itinerary.days %}
+  <div class="section">
+    <h2>Day-by-Day Plan</h2>
+    {% for day in itinerary.days %}
+    <div class="day-card">
+      <div class="day-header">
+        <div class="day-num">{{ day.day }}</div>
+        <div class="day-title">{{ day.location }} <span style="color:#a1a1aa;font-weight:400;">· {{ day.date }}</span></div>
+        {% if day.weather_note %}<div class="day-weather">{{ day.weather_note }}</div>{% endif %}
+      </div>
+      <div class="day-body">
+        {% if day.morning %}
+        <div class="time-block"><div class="time-label">Morning</div><div class="time-content">{{ day.morning }}</div></div>
+        {% endif %}
+        {% if day.afternoon %}
+        <div class="time-block"><div class="time-label">Afternoon</div><div class="time-content">
+          {{ day.afternoon }}
+          {% if day.featured_activity %}<span class="featured-tag">★ {{ day.featured_activity }}</span>{% endif %}
+        </div></div>
+        {% endif %}
+        {% if day.evening %}
+        <div class="time-block"><div class="time-label">Evening</div><div class="time-content">{{ day.evening }}</div></div>
+        {% endif %}
+        {% if day.lodging %}
+        <div class="lodging-row">🏨 {{ day.lodging }}</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% set flights = travel_data.flights %}
+  {% if flights and flights.offers %}
+  <div class="section">
+    <h2>Flight Options</h2>
+    {% for offer in flights.offers[:3] %}
+    <div class="flight-row">
+      <div>
+        <div class="option-label">{{ offer.airline | default(offer.carrier, true) | default('Flight', true) }}</div>
+        <div class="option-detail">{{ offer.departure_time | default('') }} → {{ offer.arrival_time | default('') }} · {{ offer.duration | default('') }} · {{ offer.stops | default(0) }} stop{% if offer.stops != 1 %}s{% endif %}</div>
+      </div>
+      <div class="option-price">${{ offer.price | default('–') }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% set hotels = travel_data.hotels %}
+  {% if hotels and hotels.offers %}
+  <div class="section">
+    <h2>Hotel Options</h2>
+    {% for offer in hotels.offers[:3] %}
+    <div class="hotel-row">
+      <div>
+        <div class="option-label">{{ offer.name | default('Hotel', true) }}</div>
+        <div class="option-detail">{% if offer.stars %}{{ '★' * offer.stars | int }}{% endif %} {{ offer.room_type | default('') }}</div>
+      </div>
+      <div class="option-price">${{ offer.price_per_night | default('–') }}/night</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if itinerary.booking_notes %}
+  <div class="section">
+    <h2>Booking Notes</h2>
+    {% for note in itinerary.booking_notes %}
+    <div class="note-item">{{ note }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="footer">Generated by Wanderkit · {{ generated_at[:10] }}</div>
+</div>
+</body>
+</html>

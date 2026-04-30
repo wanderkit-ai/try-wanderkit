@@ -8,18 +8,31 @@ import {
   UserCircle2,
   Building2,
   Plane,
+  Hotel,
   Inbox,
   Bot,
   Search,
   Settings,
+  Users,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/trips', label: 'Trips', icon: Plane },
+  {
+    href: '/book',
+    label: 'Book',
+    icon: BookOpen,
+    children: [
+      { href: '/book?tab=flights', label: 'Flights', icon: Plane },
+      { href: '/book?tab=hotels', label: 'Hotels', icon: Hotel },
+    ],
+  },
   { href: '/people/customers', label: 'Customers', icon: UserCircle2 },
   { href: '/people/operators', label: 'Operators', icon: Building2 },
+  { href: '/leads/discover', label: 'Leads', icon: Users },
   { href: '/agents', label: 'AI Agents', icon: Bot },
   { href: '/inbox', label: 'Inbox', icon: Inbox, badge: '2' },
 ];
@@ -54,22 +67,42 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
         {NAV.map((item) => {
           const active = isActive(item.href);
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-2 h-8 px-2 rounded text-sm',
-                active ? 'bg-hover text-ink font-medium' : 'text-ink2 hover:text-ink hover:bg-hover'
+            <div key={item.href}>
+              <Link
+                href={item.href}
+                className={cn(
+                  'flex items-center gap-2 h-8 px-2 rounded text-sm',
+                  active ? 'bg-hover text-ink font-medium' : 'text-ink2 hover:text-ink hover:bg-hover'
+                )}
+              >
+                <item.icon className="w-4 h-4 shrink-0" strokeWidth={1.75} />
+                <span className="truncate flex-1">{item.label}</span>
+                {'badge' in item && item.badge && (
+                  <span className="text-2xs px-1.5 rounded bg-accent text-white font-medium">
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+              {'children' in item && item.children && active && (
+                <div className="ml-6 mt-0.5 space-y-0.5">
+                  {item.children.map((child) => (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      className={cn(
+                        'flex items-center gap-2 h-7 px-2 rounded text-xs',
+                        pathname.includes(child.href.split('?')[0]) && pathname === '/book'
+                          ? 'text-ink font-medium'
+                          : 'text-ink2 hover:text-ink hover:bg-hover'
+                      )}
+                    >
+                      <child.icon className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
+                      {child.label}
+                    </Link>
+                  ))}
+                </div>
               )}
-            >
-              <item.icon className="w-4 h-4 shrink-0" strokeWidth={1.75} />
-              <span className="truncate flex-1">{item.label}</span>
-              {'badge' in item && item.badge && (
-                <span className="text-2xs px-1.5 rounded bg-accent text-white font-medium">
-                  {item.badge}
-                </span>
-              )}
-            </Link>
+            </div>
           );
         })}
       </nav>

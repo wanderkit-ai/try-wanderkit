@@ -7,6 +7,7 @@ AgentConfig without creating a circular import on the registry.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 
 @dataclass(frozen=True)
@@ -25,6 +26,7 @@ class AgentConfig:
     system_prompt: str
     tools: list[str]
     starters: list[str]
+    runner: Literal["anthropic", "openai"] = "anthropic"
 
     def public(self) -> dict:
         """Shape returned to the frontend by the /api/agents endpoint."""

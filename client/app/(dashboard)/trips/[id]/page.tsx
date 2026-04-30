@@ -5,6 +5,7 @@ import { Avatar } from '@/components/avatar';
 import { StatusPill } from '@/components/status-pill';
 import { SendProposalBtn } from './send-proposal-btn';
 import { ConnectorsPanel } from './connectors-panel';
+import { ItineraryWorkflowActions } from './itinerary-workflow-actions';
 import {
   trips,
   influencers,
@@ -30,6 +31,7 @@ import {
   CheckCircle2,
   Circle,
   MapPinned,
+  Plane,
   Train,
   Bed,
   Clock,
@@ -218,6 +220,22 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
           <h2 className="text-sm font-medium text-ink2 uppercase tracking-wide mb-3">
             Itinerary
           </h2>
+          <div className="mb-3">
+            <ItineraryWorkflowActions
+              payload={{
+                trip_id: trip.id,
+                destination: trip.destination,
+                startDate: trip.startDate,
+                endDate: trip.endDate,
+                budget: trip.budgetPerPerson / 100,
+                traveler_email: members[0]?.email,
+                origin: inferOrigin(members[0]?.city),
+                travelers: Math.max(bookedSeats || members.length || 1, 1),
+                style: trip.style,
+                must_haves: trip.mustHaves,
+              }}
+            />
+          </div>
           {trip.itinerary && trip.itinerary.length > 0 ? (
             <div className="surface divide-y divide-border">
               {trip.itinerary.map((day) => (
@@ -456,6 +474,23 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
               <Bot className="w-3.5 h-3.5" strokeWidth={1.75} />
               Scout Operators
             </Link>
+            <div className="border-t border-border mt-3 pt-3 space-y-1.5">
+              <div className="text-2xs text-muted uppercase tracking-wide mb-2">Quick search</div>
+              <Link
+                href={`/book?tab=flights&destination=${encodeURIComponent(trip.destination)}&date=${trip.startDate}&return=${trip.endDate}&travelers=${Math.max(bookedSeats || 1, 1)}&autosearch=1`}
+                className="btn btn-outline w-full h-8 text-xs"
+              >
+                <Plane className="w-3.5 h-3.5" strokeWidth={1.75} />
+                Search Flights
+              </Link>
+              <Link
+                href={`/book?tab=hotels&destination=${encodeURIComponent(trip.destination)}&date=${trip.startDate}&return=${trip.endDate}&travelers=${Math.max(bookedSeats || 1, 1)}&autosearch=1`}
+                className="btn btn-outline w-full h-8 text-xs"
+              >
+                <MapPin className="w-3.5 h-3.5" strokeWidth={1.75} />
+                Search Hotels
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -493,4 +528,14 @@ function Prop({
       {label}
     </div>
   );
+}
+
+function inferOrigin(city?: string) {
+  const normalized = city?.toLowerCase() ?? '';
+  if (normalized.includes('toronto')) return 'YYZ';
+  if (normalized.includes('london')) return 'LHR';
+  if (normalized.includes('stockholm')) return 'ARN';
+  if (normalized.includes('lagos')) return 'LOS';
+  if (normalized.includes('osaka')) return 'KIX';
+  return 'JFK';
 }

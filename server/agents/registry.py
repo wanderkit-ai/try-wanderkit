@@ -19,6 +19,7 @@ from .definitions import (
     negotiator,
     payments,
     social,
+    telegram_bot,
 )
 
 # Listed in the order a customer flows through the platform.
@@ -31,6 +32,7 @@ AGENT_LIST: list[AgentConfig] = [
     compliance.AGENT,
     payments.AGENT,
     social.AGENT,
+    telegram_bot.AGENT,
 ]
 
 AGENTS: dict[str, AgentConfig] = {agent.name: agent for agent in AGENT_LIST}
