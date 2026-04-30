@@ -248,7 +248,7 @@ export default function ProposalPage({ params }: { params: { id: string } }) {
         {/* Footer */}
         <div className="mt-12 pt-6 border-t text-center text-xs text-muted" style={{ borderColor: 'hsl(var(--border))' }}>
           Powered by{' '}
-          <span className="font-medium" style={{ color: 'hsl(var(--accent))' }}>Wanderkit</span>
+          <span className="font-medium" style={{ color: 'hsl(var(--accent))' }}>Noma</span>
           {' '}· AI-coordinated travel for creators and their communities
         </div>
       </div>

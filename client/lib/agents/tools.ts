@@ -446,7 +446,7 @@ const web_search_operators: ToolDef = {
 
 const add_operator: ToolDef = {
   name: 'add_operator',
-  description: 'Add a newly discovered operator to the Wanderkit database. Use after finding promising operators via web_search_operators.',
+  description: 'Add a newly discovered operator to the Noma database. Use after finding promising operators via web_search_operators.',
   input_schema: {
     type: 'object',
     properties: {
@@ -485,7 +485,7 @@ const add_operator: ToolDef = {
       added: true,
       id: newId,
       company: input.company,
-      note: 'Operator added to the Wanderkit database. They will now appear in the Operators list.',
+      note: 'Operator added to the Noma database. They will now appear in the Operators list.',
     };
   },
 };

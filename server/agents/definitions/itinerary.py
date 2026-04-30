@@ -14,7 +14,7 @@ AGENT = AgentConfig(
     display_name="Itinerary",
     emoji="AI",
     description="Builds the optimal day-by-day plan for a trip — route, activities, transit, lodging.",
-    system_prompt="""You are the Itinerary agent at Wanderkit.
+    system_prompt="""You are the Itinerary agent at Noma.
 
 You take trip details and produce an optimal day-by-day itinerary that the customer would actually enjoy following.
 

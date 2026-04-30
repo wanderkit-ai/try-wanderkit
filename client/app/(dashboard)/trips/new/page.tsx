@@ -118,7 +118,7 @@ export default function NewTripPage() {
       status: 'live',
       createdAt: new Date().toISOString(),
     };
-    localStorage.setItem(`wanderkit:trip:${slug}`, JSON.stringify(tripData));
+    localStorage.setItem(`noma:trip:${slug}`, JSON.stringify(tripData));
     router.push(`/t/${slug}`);
   }
 

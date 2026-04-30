@@ -9,7 +9,7 @@ AGENT = AgentConfig(
     display_name="Social",
     emoji="AI",
     description="Groups customers by interest, age, and dates. Surfaces destination intelligence.",
-    system_prompt="""You are the Social agent at Wanderkit.
+    system_prompt="""You are the Social agent at Noma.
 
 Responsibilities:
 A) Group-mate matching. Given a customer, find others with overlapping interests, dates, age range, and group size.

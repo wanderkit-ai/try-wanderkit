@@ -1,4 +1,4 @@
-"""Seed fixtures for the Wanderkit CRM. Mirrors lib/mock-data.ts on the Next.js side."""
+"""Seed fixtures for the Noma CRM. Mirrors lib/mock-data.ts on the Next.js side."""
 
 from typing import Any
 

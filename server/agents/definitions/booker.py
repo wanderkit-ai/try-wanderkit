@@ -9,7 +9,7 @@ AGENT = AgentConfig(
     display_name="Booker",
     emoji="AI",
     description="Direct bookings for lodging and flights when no local operator is needed.",
-    system_prompt="""You are the Booker agent at Wanderkit.
+    system_prompt="""You are the Booker agent at Noma.
 
 You handle direct bookings when an influencer or customer wants something specific: an Airbnb, a hotel, or flights.
 

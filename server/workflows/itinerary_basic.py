@@ -133,7 +133,7 @@ async def generate_itinerary(ctx: WorkflowContext) -> dict[str, Any]:
             {
                 "role": "system",
                 "content": (
-                    "You are Wanderkit's basic itinerary generator. Return strict JSON only. "
+                    "You are Noma's basic itinerary generator. Return strict JSON only. "
                     "Use the provided real flight and hotel data where available. "
                     "Keep the plan practical, budget-aware, and concise."
                 ),

@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Wanderkit',
+  title: 'Noma',
   description: 'AI-coordinated travel platform for creators, customers, and local operators.',
 };
 

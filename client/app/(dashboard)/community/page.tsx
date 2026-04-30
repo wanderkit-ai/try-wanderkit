@@ -28,7 +28,7 @@ const CATEGORIES: { id: Category; label: string; emoji: string; description: str
 
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
   influencer: { label: 'Creator', color: 'hsl(var(--accent))' },
-  team: { label: 'Wanderkit', color: 'hsl(var(--ink))' },
+  team: { label: 'Noma', color: 'hsl(var(--ink))' },
   customer: { label: 'Traveler', color: 'hsl(168 35% 45%)' },
   operator: { label: 'Operator', color: 'hsl(35 90% 45%)' },
 };
@@ -84,7 +84,7 @@ export default function CommunityPage() {
           {/* Mock replies */}
           <div className="space-y-3">
             {[
-              { name: 'Wanderkit Team', role: 'team', body: 'Thanks for sharing this! We\'ve pinned it for visibility. Anyone with additional intel on this destination, please reply below.', time: '2 days ago' },
+              { name: 'Noma Team', role: 'team', body: 'Thanks for sharing this! We\'ve pinned it for visibility. Anyone with additional intel on this destination, please reply below.', time: '2 days ago' },
               { name: 'Yuki Tanaka', role: 'customer', body: 'Super helpful — I was just wondering about this exact thing for my upcoming trip. The permit info especially.', time: '1 day ago' },
               { name: 'Marcus Reilly', role: 'customer', body: 'Agreed. One thing I\'d add — book your accommodation in the key towns at least 3 weeks ahead during peak season.', time: '18 hours ago' },
             ].map((r, i) => (

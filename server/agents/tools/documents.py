@@ -15,7 +15,7 @@ from ._shared import ToolDef
 def _mock_url() -> str:
     """Return a fake hosted-document URL. Real impl would use S3 or similar."""
     token = "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(12))
-    return f"https://docs.wanderkit.mock/{token}.pdf"
+    return f"https://docs.noma.mock/{token}.pdf"
 
 
 def _upload_document(input: dict[str, Any]) -> dict[str, Any]:

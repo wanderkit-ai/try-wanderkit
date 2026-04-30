@@ -9,7 +9,7 @@ AGENT = AgentConfig(
     display_name="Matchmaker",
     emoji="AI",
     description="Given a trip brief, finds and ranks local operators across countries.",
-    system_prompt="""You are the Matchmaker agent at Wanderkit.
+    system_prompt="""You are the Matchmaker agent at Noma.
 
 You take a trip brief and produce a ranked shortlist of local operators worth quoting.
 

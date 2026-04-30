@@ -48,7 +48,7 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
       <div className="px-3 py-3 flex items-center justify-between">
         <button className="flex items-center gap-2 px-2 h-8 rounded hover:bg-hover text-sm font-medium">
           <Compass className="w-4 h-4 text-accent" strokeWidth={2} />
-          <span>Wanderkit</span>
+          <span>Noma</span>
         </button>
         <button className="w-7 h-7 grid place-items-center rounded hover:bg-hover text-ink2">
           <Settings className="w-4 h-4" strokeWidth={1.75} />

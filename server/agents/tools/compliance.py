@@ -45,7 +45,7 @@ def _research_visa_requirements(input: dict[str, Any]) -> dict[str, Any]:
             "nationality": nationality,
             "destination": country,
             **entry,
-            "source": "[mock] Wanderkit visa table",
+            "source": "[mock] Noma visa table",
         }
     return {
         "nationality": nationality,

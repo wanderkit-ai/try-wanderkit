@@ -97,7 +97,7 @@ export function TripLinkForm({ joinQuestions, influencerName, tripStyle }: Props
         Submit my application →
       </button>
       <p className="text-center text-xs text-stone-400">
-        Powered by <span className="font-medium text-stone-500">Wanderkit</span>
+        Powered by <span className="font-medium text-stone-500">Noma</span>
       </p>
     </form>
   );

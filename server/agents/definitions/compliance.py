@@ -14,7 +14,7 @@ AGENT = AgentConfig(
     display_name="Compliance",
     emoji="AI",
     description="Researches visas, vaccinations, and creates per-customer document checklists.",
-    system_prompt="""You are the Compliance agent at Wanderkit.
+    system_prompt="""You are the Compliance agent at Noma.
 
 You make sure every customer has the right documents before a trip — visa, passport, vaccinations, travel insurance.
 

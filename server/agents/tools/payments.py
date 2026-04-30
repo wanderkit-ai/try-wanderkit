@@ -37,7 +37,7 @@ def _create_invoice(input: dict[str, Any]) -> dict[str, Any]:
         "amountUsd": amount,
         "lineItems": input.get("line_items") or [],
         "status": "open",
-        "url": f"https://invoices.wanderkit.mock/{_token('inv')}",
+        "url": f"https://invoices.noma.mock/{_token('inv')}",
         "createdAt": int(time.time()),
         "chargeId": None,
         "refundedUsd": 0.0,

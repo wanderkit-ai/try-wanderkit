@@ -158,7 +158,7 @@ export default function PublicTripLinkPage({ params }: { params: { slug: string 
 
         {/* Footer */}
         <p className="text-center text-xs text-stone-400 pb-4">
-          Powered by <span className="font-medium text-stone-500">Wanderkit</span>
+          Powered by <span className="font-medium text-stone-500">Noma</span>
         </p>
       </div>
     </div>

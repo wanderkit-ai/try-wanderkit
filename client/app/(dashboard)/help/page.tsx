@@ -19,11 +19,11 @@ import {
 const FAQS = [
   {
     q: 'How do the AI agents work?',
-    a: 'Wanderkit\'s agents are powered by Claude (Anthropic\'s AI). Each agent has a specific role: Concierge takes customer intake, Matchmaker finds operators, Negotiator requests and compares quotes, Booker handles direct reservations, Itinerary builds day-by-day plans, and Social groups compatible travelers. Agents can call real tools (WhatsApp, email, bookings) and stream their reasoning live.',
+    a: 'Noma\'s agents are powered by Claude (Anthropic\'s AI). Each agent has a specific role: Concierge takes customer intake, Matchmaker finds operators, Negotiator requests and compares quotes, Booker handles direct reservations, Itinerary builds day-by-day plans, and Social groups compatible travelers. Agents can call real tools (WhatsApp, email, bookings) and stream their reasoning live.',
   },
   {
     q: 'Is payment information stored securely?',
-    a: 'In this MVP, Stripe is intentionally disabled — all bookings are held without payment processing. In production, payments would be handled entirely by Stripe and Wanderkit would never store raw card data. All data is encrypted at rest via Supabase.',
+    a: 'In this MVP, Stripe is intentionally disabled — all bookings are held without payment processing. In production, payments would be handled entirely by Stripe and Noma would never store raw card data. All data is encrypted at rest via Supabase.',
   },
   {
     q: 'How do I add a new customer or influencer?',
@@ -81,14 +81,14 @@ export default function HelpPage() {
           messages: [
             {
               role: 'user',
-              content: `You are the Wanderkit Help assistant. Answer this question about the Wanderkit platform concisely and helpfully. Keep responses under 3 short paragraphs. Question: ${question}`,
+              content: `You are the Noma Help assistant. Answer this question about the Noma platform concisely and helpfully. Keep responses under 3 short paragraphs. Question: ${question}`,
             },
           ],
         }),
       });
 
       if (!res.ok || !res.body) {
-        setAiMessages((m) => [...m, { role: 'assistant', text: 'Sorry, I couldn\'t connect right now. Try again or email support@wanderkit.co.' }]);
+        setAiMessages((m) => [...m, { role: 'assistant', text: 'Sorry, I couldn\'t connect right now. Try again or email support@noma.co.' }]);
         return;
       }
 
@@ -121,7 +121,7 @@ export default function HelpPage() {
         }
       }
     } catch {
-      setAiMessages((m) => [...m, { role: 'assistant', text: 'Something went wrong. Please email support@wanderkit.co.' }]);
+      setAiMessages((m) => [...m, { role: 'assistant', text: 'Something went wrong. Please email support@noma.co.' }]);
     } finally {
       setAiRunning(false);
     }
@@ -137,7 +137,7 @@ export default function HelpPage() {
       <PageHeader
         icon="❓"
         title="Help"
-        description="Answers, AI support, and a direct line to the Wanderkit team."
+        description="Answers, AI support, and a direct line to the Noma team."
       />
       <div className="px-12 pb-12 space-y-10 max-w-4xl">
 
@@ -158,7 +158,7 @@ export default function HelpPage() {
             <Bot className="w-4 h-4 text-accent" strokeWidth={2} />
             Ask AI
           </h2>
-          <p className="text-xs text-muted mb-3">Ask anything about Wanderkit — how agents work, how to set up a trip, or what to do next.</p>
+          <p className="text-xs text-muted mb-3">Ask anything about Noma — how agents work, how to set up a trip, or what to do next.</p>
 
           <div className="surface overflow-hidden">
             <div className="p-4 space-y-3 min-h-[80px] max-h-64 overflow-y-auto">
@@ -180,7 +180,7 @@ export default function HelpPage() {
                 value={aiInput}
                 onChange={(e) => setAiInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && sendToAI()}
-                placeholder="Ask a question about Wanderkit…"
+                placeholder="Ask a question about Noma…"
                 disabled={aiRunning}
                 className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted text-ink"
               />
@@ -223,7 +223,7 @@ export default function HelpPage() {
         <div>
           <h2 className="text-sm font-semibold text-ink mb-1 flex items-center gap-2">
             <Mail className="w-4 h-4 text-accent" strokeWidth={2} />
-            Get in touch with Wanderkit
+            Get in touch with Noma
           </h2>
           <p className="text-xs text-muted mb-3">Have a question we haven&apos;t covered? We typically respond within one business day.</p>
 
@@ -268,7 +268,7 @@ export default function HelpPage() {
                   placeholder="Tell us what you need…" />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted">support@wanderkit.co · usually replies within 24h</span>
+                <span className="text-xs text-muted">support@noma.co · usually replies within 24h</span>
                 <button type="submit" className="btn btn-primary h-9 px-4 text-sm">
                   <Send className="w-3.5 h-3.5" strokeWidth={2} />
                   Send message
