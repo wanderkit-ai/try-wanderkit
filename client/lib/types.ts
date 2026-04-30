@@ -19,6 +19,12 @@ export interface ItineraryDay {
   activities: string[];
   transit: string;
   lodging: string;
+  // Premium workflow fields
+  weather_note?: string;
+  morning?: string;
+  afternoon?: string;
+  evening?: string;
+  featured_activity?: string | null;
 }
 
 export interface Invoice {

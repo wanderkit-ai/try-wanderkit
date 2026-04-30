@@ -35,33 +35,42 @@ def _activity_pool(styles: list[str]) -> list[str]:
 
 
 def _build_itinerary(input: dict[str, Any]) -> dict[str, Any]:
-    """Generate a day-by-day itinerary for a trip and persist it on the trip.
+    """Generate a day-by-day itinerary from direct input or a stored trip brief.
 
-    Picks activities from a style-keyed bank, alternates with transit/buffer
-    days, and writes the result into TRIPS in-memory so the trip detail page
-    can render it on next load.
+    Accepts trip parameters directly (destination, start_date, end_date, style,
+    must_haves) so it works for new trips that have no stored record. When a
+    trip_id is provided and found, its fields fill in any missing values.
     """
     trip_id = input.get("trip_id")
-    trip = find_by_id(TRIPS, trip_id)
-    if not trip:
-        return {"error": f"Trip {trip_id} not found"}
+    trip = find_by_id(TRIPS, trip_id) if trip_id else None
 
+    # Resolve dates — prefer explicit input, fall back to stored trip
     days = int(input.get("days") or 0)
     if days <= 0:
-        try:
-            start = date.fromisoformat(trip["startDate"])
-            end = date.fromisoformat(trip["endDate"])
-            days = max(1, (end - start).days + 1)
-        except (KeyError, ValueError):
+        start_str = input.get("start_date") or (trip or {}).get("startDate")
+        end_str = input.get("end_date") or (trip or {}).get("endDate")
+        if start_str and end_str:
+            try:
+                days = max(1, (date.fromisoformat(end_str) - date.fromisoformat(start_str)).days + 1)
+            except ValueError:
+                days = 7
+        else:
             days = 7
 
-    base_location = trip.get("region") or trip.get("destination") or "Destination"
-    activities = _activity_pool(trip.get("style", []))
-    must_haves = trip.get("mustHaves", [])
+    base_location = (
+        input.get("destination")
+        or (trip or {}).get("region")
+        or (trip or {}).get("destination")
+        or "Destination"
+    )
+    styles = input.get("style") or (trip or {}).get("style") or []
+    must_haves = input.get("must_haves") or (trip or {}).get("mustHaves") or []
+    activities = _activity_pool(styles)
 
+    start_date_str = input.get("start_date") or (trip or {}).get("startDate")
     try:
-        start_date = date.fromisoformat(trip["startDate"])
-    except (KeyError, ValueError):
+        start_date = date.fromisoformat(start_date_str) if start_date_str else date.today()
+    except ValueError:
         start_date = date.today()
 
     itinerary: list[dict[str, Any]] = []
@@ -110,14 +119,15 @@ def _build_itinerary(input: dict[str, Any]) -> dict[str, Any]:
             }
         itinerary.append(day_plan)
 
-    # Mutate the trip record so the trip detail page renders the result.
-    trip["itinerary"] = itinerary
+    # Persist onto the trip record when one exists.
+    if trip is not None:
+        trip["itinerary"] = itinerary
 
     return {
         "tripId": trip_id,
+        "destination": base_location,
         "totalDays": days,
         "itinerary": itinerary,
-        "note": "[mock] Itinerary saved on the trip. Agents can refine in chat.",
     }
 
 
@@ -132,17 +142,33 @@ TOOLS: dict[str, ToolDef] = {
         input_schema={
             "type": "object",
             "properties": {
-                "trip_id": {"type": "string"},
+                "trip_id": {
+                    "type": "string",
+                    "description": "Optional stored trip ID. When provided its fields fill any missing values.",
+                },
+                "destination": {"type": "string", "description": "Destination city or region."},
+                "start_date": {"type": "string", "description": "ISO date, e.g. 2026-06-10."},
+                "end_date": {"type": "string", "description": "ISO date, e.g. 2026-06-17."},
+                "style": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Trip styles e.g. ['hiking', 'cultural'].",
+                },
+                "must_haves": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Activities that must appear in the plan.",
+                },
                 "days": {
                     "type": "number",
-                    "description": "Override day count. If omitted, uses startDate→endDate.",
+                    "description": "Override day count. If omitted, derived from start_date/end_date.",
                 },
                 "focus": {
                     "type": "string",
                     "description": "Optional emphasis e.g. 'food', 'photography', 'relaxed pace'.",
                 },
             },
-            "required": ["trip_id"],
+            "required": [],
         },
         handler=_build_itinerary,
     ),

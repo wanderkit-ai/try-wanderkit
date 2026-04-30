@@ -1,18 +1,20 @@
-"""Destination intelligence — weather, advisories, news. All mocked."""
+"""Destination intelligence — weather, advisories, news."""
 
 from __future__ import annotations
 
 from typing import Any
 
 from ._shared import ToolDef
+from .weather_openmeteo import openmeteo_forecast
 
 
 def _get_weather(input: dict[str, Any]) -> dict[str, Any]:
-    """Return a mock 7-day weather summary for a destination."""
-    return {
+    """Return a real 7-day weather forecast from Open-Meteo for a destination."""
+    return openmeteo_forecast({
         "destination": input.get("destination"),
-        "summary": "[mock] Avg high 22C, lows 8C, 20% chance of rain mid-week.",
-    }
+        "forecast_days": 7,
+        "temperature_unit": input.get("temperature_unit", "celsius"),
+    })
 
 
 def _get_travel_advisory(input: dict[str, Any]) -> dict[str, Any]:
