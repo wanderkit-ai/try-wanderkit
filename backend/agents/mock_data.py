@@ -39,6 +39,7 @@ OPERATORS: list[dict[str, Any]] = [
         "country": "Argentina", "region": "Patagonia",
         "specialties": ["expedition", "hiking"], "rating": 4.8, "responseHours": 4,
         "priceTier": "$$",
+        "website": "https://andestours.ar",
         "notes": "Reliable. Speaks fluent English. Owns mountain lodge.",
     },
     {

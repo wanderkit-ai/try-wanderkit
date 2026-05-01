@@ -6,8 +6,8 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from server.agents.tools.flights_amadeus import amadeus_search_flights
-from server.agents.tools.hotels_amadeus import amadeus_search_hotels
+from server.agents.tools.flights_amadeus import google_search_flights
+from server.agents.tools.hotels_amadeus import google_search_hotels
 
 
 router = APIRouter()
@@ -28,15 +28,14 @@ class HotelSearchRequest(BaseModel):
     check_in: str
     check_out: str
     adults: int = 1
-    currency: str = "USD"
-    max_hotels: int = 10
+    max_results: int = 10
 
 
 @router.post("/api/search/flights")
 async def search_flights(body: FlightSearchRequest) -> dict[str, Any]:
-    return await asyncio.to_thread(amadeus_search_flights, body.model_dump(exclude_none=True))
+    return await asyncio.to_thread(google_search_flights, body.model_dump(exclude_none=True))
 
 
 @router.post("/api/search/hotels")
 async def search_hotels(body: HotelSearchRequest) -> dict[str, Any]:
-    return await asyncio.to_thread(amadeus_search_hotels, body.model_dump(exclude_none=True))
+    return await asyncio.to_thread(google_search_hotels, body.model_dump(exclude_none=True))

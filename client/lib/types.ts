@@ -187,6 +187,66 @@ export interface WaitlistEntry {
 
 export type AgentName = 'itinerary' | 'scout';
 
+// ── Itinerary planning enrichment types ──────────────────────────────────────
+
+export interface FlightOption {
+  airline: string;
+  flight_number?: string;
+  origin?: string;
+  destination?: string;
+  departure_time?: string;
+  arrival_time?: string;
+  duration_hours?: number;
+  per_pax_usd?: number;
+  total_usd?: number;
+  layovers?: number;
+  ai_score?: number;
+  ai_reason?: string;
+  recommended?: boolean;
+}
+
+export interface HotelOption {
+  id?: string;
+  name: string;
+  category?: string;
+  stars?: number;
+  rating?: number;
+  price_per_night_usd?: number;
+  total_usd?: number;
+  total_nights?: number;
+  check_in?: string;
+  check_out?: string;
+  amenities?: string[];
+  ai_score?: number;
+  ai_reason?: string;
+  recommended?: boolean;
+  style_tags?: string[];
+}
+
+export interface CostBreakdown {
+  flights_usd?: number;
+  hotel_usd?: number;
+  activities_usd?: number;
+  meals_usd?: number;
+  total_usd?: number;
+}
+
+export interface EnhancedItineraryResult {
+  tripId?: string;
+  destination?: string;
+  origin?: string;
+  totalDays?: number;
+  itinerary: ItineraryDay[];
+  outbound_flight?: FlightOption;
+  return_flight?: FlightOption;
+  hotel?: HotelOption;
+  cost_breakdown?: CostBreakdown;
+  ai_summary?: string;
+  status?: 'draft' | 'saved';
+  preview?: boolean;
+  saved?: boolean;
+}
+
 export interface AgentEvent {
   id: string;
   agent: AgentName;

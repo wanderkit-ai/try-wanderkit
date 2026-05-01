@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { AGENT_LIST } from '@/lib/agents/registry';
 import { AgentChat } from '@/components/agent-chat';
 import { ItineraryAgentLayout } from '@/components/itinerary-agent-layout';
+import { ScoutAgentLayout } from '@/components/scout-agent-layout';
 import { PageHeader } from '@/components/page-header';
 
 export default function AgentPage({
@@ -32,8 +33,6 @@ export default function AgentPage({
     initialMessage,
   };
 
-  const isItinerary = config.name === 'itinerary';
-
   return (
     <>
       <PageHeader
@@ -42,9 +41,13 @@ export default function AgentPage({
         crumbs={[{ label: 'Agents' }, { label: config.displayName }]}
         description={config.description}
       />
-      {isItinerary ? (
+      {config.name === 'itinerary' ? (
         <div className="px-6 pb-6">
           <ItineraryAgentLayout config={agentConfig} />
+        </div>
+      ) : config.name === 'scout' ? (
+        <div className="px-6 pb-6">
+          <ScoutAgentLayout config={agentConfig} />
         </div>
       ) : (
         <div className="px-12 pb-6">

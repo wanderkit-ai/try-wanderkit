@@ -1,122 +1,117 @@
+"""Google Hotels search via SerpAPI.
+
+Requires SERPAPI_KEY. Free tier: 100 searches/month.
+Get a key at: https://serpapi.com
+"""
+
 from __future__ import annotations
 
 from typing import Any
 
 import httpx
 
+from server.settings import get_settings
+
 from ._shared import ToolDef
-from ._travel_lookup import lookup_destination
-from .flights_amadeus import AMADEUS_BASE_URL, _amadeus_token
+
+SERPAPI_BASE_URL = "https://serpapi.com/search"
 
 
-def _parse_hotel_offer(item: dict[str, Any]) -> dict[str, Any]:
-    hotel = item.get("hotel", {})
-    offers = item.get("offers") or []
-    first_offer = offers[0] if offers else {}
+def _parse_hotel(h: dict[str, Any]) -> dict[str, Any]:
+    rate = h.get("rate_per_night") or {}
+    total = h.get("total_rate") or {}
     return {
-        "hotel_id": hotel.get("hotelId"),
-        "name": hotel.get("name"),
-        "city_code": hotel.get("cityCode"),
-        "check_in": first_offer.get("checkInDate"),
-        "check_out": first_offer.get("checkOutDate"),
-        "room": first_offer.get("room", {}),
-        "price": first_offer.get("price", {}),
-        "policies": first_offer.get("policies", {}),
-        "offer_count": len(offers),
+        "name": h.get("name"),
+        "hotel_class": h.get("hotel_class"),
+        "stars": h.get("overall_rating"),
+        "review_count": h.get("reviews"),
+        "description": (h.get("description") or "")[:300],
+        "price_per_night": rate.get("lowest") or rate.get("extracted_lowest"),
+        "total_price": total.get("lowest") or total.get("extracted_lowest"),
+        "currency": "USD",
+        "check_in_time": h.get("check_in_time"),
+        "check_out_time": h.get("check_out_time"),
+        "amenities": (h.get("amenities") or [])[:8],
+        "thumbnail": h.get("thumbnail"),
+        "link": h.get("link"),
+        "source": "google_hotels",
     }
 
 
-def amadeus_search_hotels(input: dict[str, Any]) -> dict[str, Any]:
+def google_search_hotels(input: dict[str, Any]) -> dict[str, Any]:
+    """Search Google Hotels for a destination and stay period via SerpAPI."""
     try:
-        destination_info = lookup_destination(input.get("destination") or input.get("city_code"))
-        city_code = str(input.get("city_code") or destination_info["city"]).upper()
-        adults = int(input.get("adults") or input.get("guests") or 1)
-        max_hotels = max(1, min(int(input.get("max_hotels") or 12), 40))
-        check_in = input.get("check_in") or input.get("checkInDate")
-        check_out = input.get("check_out") or input.get("checkOutDate")
+        settings = get_settings()
+        if not settings.serpapi_key:
+            return {"error": "SERPAPI_KEY is not configured — get a free key at serpapi.com"}
 
+        destination = (input.get("destination") or "").strip()
+        check_in = input.get("check_in") or input.get("checkin_date")
+        check_out = input.get("check_out") or input.get("checkout_date")
+        adults = min(int(input.get("adults") or input.get("guests") or 2), 6)
+        max_results = int(input.get("max_results") or 10)
+
+        if not destination:
+            return {"error": "destination is required"}
         if not check_in or not check_out:
             return {"error": "check_in and check_out are required"}
 
-        token = _amadeus_token()
-        headers = {"Authorization": f"Bearer {token}"}
+        params: dict[str, Any] = {
+            "engine": "google_hotels",
+            "q": f"{destination} Hotels",
+            "check_in_date": check_in,
+            "check_out_date": check_out,
+            "adults": adults,
+            "currency": "USD",
+            "hl": "en",
+            "api_key": settings.serpapi_key,
+        }
+
         with httpx.Client(timeout=30) as client:
-            hotel_list_response = client.get(
-                f"{AMADEUS_BASE_URL}/v1/reference-data/locations/hotels/by-city",
-                params={
-                    "cityCode": city_code,
-                    "radius": int(input.get("radius") or 20),
-                    "radiusUnit": input.get("radius_unit") or "KM",
-                    "hotelSource": "ALL",
-                },
-                headers=headers,
-            )
-            if hotel_list_response.status_code >= 400:
-                return {
-                    "error": "Amadeus hotel list failed",
-                    "status": hotel_list_response.status_code,
-                    "details": hotel_list_response.text,
-                }
-            hotel_ids = [
-                item.get("hotelId")
-                for item in hotel_list_response.json().get("data", [])
-                if item.get("hotelId")
-            ][:max_hotels]
-            if not hotel_ids:
-                return {"city_code": city_code, "hotels": [], "count": 0, "source": "amadeus-test"}
+            r = client.get(SERPAPI_BASE_URL, params=params)
 
-            offers_response = client.get(
-                f"{AMADEUS_BASE_URL}/v3/shopping/hotel-offers",
-                params={
-                    "hotelIds": ",".join(hotel_ids),
-                    "adults": adults,
-                    "checkInDate": check_in,
-                    "checkOutDate": check_out,
-                    "currency": input.get("currency") or "USD",
-                    "bestRateOnly": "true",
-                },
-                headers=headers,
-            )
-        if offers_response.status_code >= 400:
-            return {
-                "error": "Amadeus hotel offers failed",
-                "status": offers_response.status_code,
-                "details": offers_response.text,
-                "city_code": city_code,
-                "hotel_ids": hotel_ids,
-            }
+        if r.status_code >= 400:
+            return {"error": "SerpAPI hotel search failed", "status": r.status_code, "details": r.text[:300]}
 
-        hotels = [_parse_hotel_offer(item) for item in offers_response.json().get("data", [])]
+        payload = r.json()
+        if "error" in payload:
+            return {"error": payload["error"]}
+
+        raw = payload.get("properties") or []
+        hotels = [_parse_hotel(h) for h in raw[:max_results]]
+
         return {
-            "city_code": city_code,
+            "destination": destination,
             "check_in": check_in,
             "check_out": check_out,
+            "adults": adults,
             "hotels": hotels,
             "count": len(hotels),
-            "source": "amadeus-test",
+            "source": "google_hotels",
         }
     except Exception as exc:
-        return {"error": str(exc) or "Amadeus hotel search failed"}
+        return {"error": str(exc) or "Google Hotels search failed"}
 
 
 TOOLS: dict[str, ToolDef] = {
-    "amadeus_search_hotels": ToolDef(
-        name="amadeus_search_hotels",
-        description="Search real Amadeus test hotel offers for a city and stay dates.",
+    "google_search_hotels": ToolDef(
+        name="google_search_hotels",
+        description=(
+            "Search Google Hotels for real hotel availability and prices for a destination and stay period. "
+            "Returns hotels with ratings, prices, amenities, and booking links. "
+            "Requires SERPAPI_KEY (serpapi.com)."
+        ),
         input_schema={
             "type": "object",
             "properties": {
-                "destination": {"type": "string", "description": "Destination name or city code."},
-                "city_code": {"type": "string", "description": "IATA city code."},
-                "check_in": {"type": "string", "description": "YYYY-MM-DD check-in date."},
-                "check_out": {"type": "string", "description": "YYYY-MM-DD check-out date."},
-                "adults": {"type": "integer", "minimum": 1},
-                "currency": {"type": "string", "default": "USD"},
-                "max_hotels": {"type": "integer", "minimum": 1, "maximum": 40},
+                "destination": {"type": "string", "description": "City or region name, e.g. 'Marrakech' or 'Bali'."},
+                "check_in": {"type": "string", "description": "Check-in date YYYY-MM-DD."},
+                "check_out": {"type": "string", "description": "Check-out date YYYY-MM-DD."},
+                "adults": {"type": "integer", "minimum": 1, "default": 2},
+                "max_results": {"type": "integer", "minimum": 1, "maximum": 20, "default": 10},
             },
             "required": ["destination", "check_in", "check_out"],
         },
-        handler=amadeus_search_hotels,
+        handler=google_search_hotels,
     )
 }
-

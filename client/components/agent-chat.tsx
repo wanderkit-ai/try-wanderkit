@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Send, Loader2, Wrench, Bot, User as UserIcon, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
+import { ToolBlock } from './tool-result-renderers';
 
 export interface AgentClientConfig {
   name: string;
@@ -15,10 +16,17 @@ export interface AgentClientConfig {
   initialMessage?: string;
   /** Called whenever a tool result arrives — useful for side-panel UIs */
   onToolResult?: (name: string, result: unknown) => void;
+  /** Called when the agent invokes a tool (before result arrives) */
+  onToolUse?: (name: string, input: unknown) => void;
   /** Called whenever the running state changes */
   onRunningChange?: (running: boolean) => void;
   /** Sidebar mode: removes max-width centering and fixed height so parent controls layout */
   sidebar?: boolean;
+}
+
+export interface AgentChatHandle {
+  /** Send a message into the chat programmatically */
+  send: (text: string) => void;
 }
 
 type Block =
@@ -31,13 +39,18 @@ interface ChatMessage {
   content: string;
 }
 
-export function AgentChat({ config }: { config: AgentClientConfig }) {
+export const AgentChat = forwardRef<AgentChatHandle, { config: AgentClientConfig }>(function AgentChat(
+  { config },
+  ref,
+) {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [input, setInput] = useState('');
   const [running, setRunning] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<ChatMessage[]>([]);
   const didAutoSend = useRef(false);
+
+  useImperativeHandle(ref, () => ({ send: (text: string) => send(text) }));
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -116,6 +129,7 @@ export function AgentChat({ config }: { config: AgentClientConfig }) {
           } else if (evt.type === 'tool_use') {
             assembledAssistant = '';
             turnText += '\n';
+            config.onToolUse?.(evt.name, evt.input);
             setBlocks((b) => [
               ...b,
               { kind: 'tool', name: evt.name, input: evt.input },
@@ -219,38 +233,8 @@ export function AgentChat({ config }: { config: AgentClientConfig }) {
               <div className="w-7 h-7 rounded-full bg-hover text-ink2 grid place-items-center shrink-0 mt-0.5">
                 <Wrench className="w-3.5 h-3.5" strokeWidth={1.75} />
               </div>
-              <div className="flex-1">
-                <div className="text-2xs uppercase tracking-wide text-muted font-medium">
-                  Tool · {b.name}
-                </div>
-                <details className="mt-1 surface text-xs">
-                  <summary className="px-3 py-2 cursor-pointer text-ink2 hover:text-ink">
-                    {b.result === undefined ? (
-                      <span className="inline-flex items-center gap-1.5">
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                        Calling {b.name}…
-                      </span>
-                    ) : (
-                      <span>{b.name} → result</span>
-                    )}
-                  </summary>
-                  <div className="px-3 pb-3 space-y-2">
-                    <div>
-                      <div className="text-2xs text-muted mb-1">Input</div>
-                      <pre className="bg-bg p-2 rounded text-2xs overflow-x-auto font-mono">
-                        {JSON.stringify(b.input, null, 2)}
-                      </pre>
-                    </div>
-                    {b.result !== undefined && (
-                      <div>
-                        <div className="text-2xs text-muted mb-1">Result</div>
-                        <pre className="bg-bg p-2 rounded text-2xs overflow-x-auto font-mono max-h-64">
-                          {JSON.stringify(b.result, null, 2)}
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-                </details>
+              <div className="flex-1 min-w-0">
+                <ToolBlock name={b.name} input={b.input} result={b.result} />
               </div>
             </div>
           );
@@ -309,4 +293,4 @@ export function AgentChat({ config }: { config: AgentClientConfig }) {
       </div>
     </div>
   );
-}
+});

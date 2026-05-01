@@ -45,6 +45,8 @@ def _search_operators(input: dict[str, Any]) -> list[dict[str, Any]]:
             "replyTimeHours": op["responseHours"],
             "priceTier": op["priceTier"],
             "whatsapp": op["whatsapp"],
+            "email": op.get("email", ""),
+            "website": op.get("website", ""),
         }
         for op in matches
     ]
@@ -61,7 +63,9 @@ def _web_search_operators(input: dict[str, Any]) -> dict[str, Any]:
     settings = get_settings()
 
     style_clause = f" {specialty}" if specialty else ""
-    query = f"local tour operators {location}{style_clause} travel company"
+    # Bias toward operator homepages, but listicles will still appear — that's
+    # fine because Scout can scrape them with firecrawl_scrape.
+    query = f"{location}{style_clause} tour operator official site -\"top 10\" -\"best of\""
 
     if settings.serpapi_key:
         try:
@@ -70,7 +74,7 @@ def _web_search_operators(input: dict[str, Any]) -> dict[str, Any]:
                 params={
                     "q": query,
                     "api_key": settings.serpapi_key,
-                    "num": 8,
+                    "num": 10,
                     "engine": "google",
                 },
                 timeout=15,
@@ -83,13 +87,17 @@ def _web_search_operators(input: dict[str, Any]) -> dict[str, Any]:
                     "snippet": r.get("snippet"),
                     "link": r.get("link"),
                 }
-                for r in (data.get("organic_results") or [])[:8]
+                for r in (data.get("organic_results") or [])[:10]
             ]
             return {
                 "location": location,
                 "query": query,
                 "results": results,
-                "note": "Review these and call add_operator for any worth adding.",
+                "note": (
+                    "If results look like listicles ('Top 10', 'Best of', tripadvisor/lonelyplanet/etc), "
+                    "use firecrawl_scrape on the top 1-2 to extract the named operator companies, "
+                    "then scrape each operator's homepage to gather contact details before calling add_operator."
+                ),
             }
         except Exception as exc:
             return {"location": location, "error": str(exc), "results": []}
@@ -128,6 +136,7 @@ def _add_operator(input: dict[str, Any]) -> dict[str, Any]:
         "rating": float(input.get("rating", 0)),
         "responseHours": int(input.get("responseHours", 24)),
         "priceTier": input.get("priceTier", "$$"),
+        "website": input.get("website", ""),
         "notes": input.get("notes", ""),
     }
     OPERATORS.append(new_op)
@@ -135,6 +144,22 @@ def _add_operator(input: dict[str, Any]) -> dict[str, Any]:
         "added": True,
         "id": new_id,
         "company": new_op["company"],
+        "operator": {
+            "id": new_id,
+            "company": new_op["company"],
+            "contact": new_op.get("contactName", ""),
+            "contactName": new_op.get("contactName", ""),
+            "email": new_op.get("email", ""),
+            "whatsapp": new_op.get("whatsapp", ""),
+            "country": new_op.get("country", ""),
+            "region": new_op.get("region", ""),
+            "specialties": new_op.get("specialties", []),
+            "rating": new_op.get("rating", 0),
+            "replyTimeHours": new_op.get("responseHours", 24),
+            "priceTier": new_op.get("priceTier", "$$"),
+            "website": new_op.get("website", ""),
+            "notes": new_op.get("notes", ""),
+        },
         "note": "Operator saved. They now appear in the Operators list at /people/operators.",
     }
 
@@ -185,6 +210,7 @@ TOOLS: dict[str, ToolDef] = {
                 "rating": {"type": "number"},
                 "responseHours": {"type": "number"},
                 "priceTier": {"type": "string", "enum": ["$", "$$", "$$$"]},
+                "website": {"type": "string", "description": "Operator's official homepage URL (extracted from scraped content)"},
                 "notes": {"type": "string"},
             },
             "required": ["company", "contactName", "country", "region"],

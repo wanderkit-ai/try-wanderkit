@@ -1,6 +1,11 @@
+"""Google Flights search via SerpAPI.
+
+Requires SERPAPI_KEY. Free tier: 100 searches/month.
+Get a key at: https://serpapi.com
+"""
+
 from __future__ import annotations
 
-import time
 from typing import Any
 
 import httpx
@@ -10,58 +15,21 @@ from server.settings import get_settings
 from ._shared import ToolDef
 from ._travel_lookup import lookup_destination, lookup_origin
 
-
-# Kept for hotels_amadeus.py which still uses the Amadeus hotel API.
-AMADEUS_BASE_URL = "https://test.api.amadeus.com"
-_TOKEN_CACHE: dict[str, Any] = {}
-
-
-def _amadeus_token() -> str:
-    settings = get_settings()
-    if not settings.amadeus_client_id or not settings.amadeus_client_secret:
-        raise RuntimeError("AMADEUS_CLIENT_ID and AMADEUS_CLIENT_SECRET are required")
-
-    now = time.time()
-    if _TOKEN_CACHE.get("access_token") and _TOKEN_CACHE.get("expires_at", 0) > now:
-        return str(_TOKEN_CACHE["access_token"])
-
-    with httpx.Client(timeout=20) as client:
-        response = client.post(
-            f"{AMADEUS_BASE_URL}/v1/security/oauth2/token",
-            data={
-                "grant_type": "client_credentials",
-                "client_id": settings.amadeus_client_id,
-                "client_secret": settings.amadeus_client_secret,
-            },
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-        )
-    response.raise_for_status()
-    data = response.json()
-    token = data["access_token"]
-    _TOKEN_CACHE.update(
-        {
-            "access_token": token,
-            "expires_at": now + int(data.get("expires_in", 1700)) - 60,
-        }
-    )
-    return str(token)
-
-
 SERPAPI_BASE_URL = "https://serpapi.com/search"
 
 
-def _parse_serpapi_flight(flight: dict[str, Any], currency: str) -> dict[str, Any]:
+def _parse_flight(flight: dict[str, Any], currency: str) -> dict[str, Any]:
     legs = flight.get("flights") or []
     first_leg = legs[0] if legs else {}
     last_leg = legs[-1] if legs else {}
     airlines = list({leg.get("airline") for leg in legs if leg.get("airline")})
     total_duration = flight.get("total_duration")
-    stops = max(0, len(legs) - 1)
     return {
         "price": {"total": flight.get("price"), "currency": currency},
         "airlines": airlines,
-        "duration": f"PT{total_duration}M" if total_duration else None,
-        "stops": stops,
+        "duration_minutes": total_duration,
+        "duration_hours": round(total_duration / 60, 1) if total_duration else None,
+        "stops": max(0, len(legs) - 1),
         "departure": {
             "iataCode": first_leg.get("departure_airport", {}).get("id"),
             "at": first_leg.get("departure_airport", {}).get("time"),
@@ -76,7 +44,7 @@ def _parse_serpapi_flight(flight: dict[str, Any], currency: str) -> dict[str, An
     }
 
 
-def amadeus_search_flights(input: dict[str, Any]) -> dict[str, Any]:
+def google_search_flights(input: dict[str, Any]) -> dict[str, Any]:
     """Search flights via SerpAPI Google Flights."""
     try:
         settings = get_settings()
@@ -85,7 +53,12 @@ def amadeus_search_flights(input: dict[str, Any]) -> dict[str, Any]:
 
         destination_info = lookup_destination(input.get("destination") or input.get("destinationLocationCode"))
         origin = lookup_origin(input.get("origin") or input.get("originLocationCode"))
-        destination = (input.get("destination_airport") or destination_info["airport"]).upper()
+        destination = (
+            input.get("destination_airport")
+            or destination_info.get("airport")
+            or destination_info.get("city")
+            or (input.get("destination") or "").strip()
+        ).upper()
 
         departure_date = input.get("departure_date") or input.get("depart_date")
         if not departure_date:
@@ -121,7 +94,7 @@ def amadeus_search_flights(input: dict[str, Any]) -> dict[str, Any]:
 
         max_results = int(input.get("max_results") or input.get("max") or 5)
         raw = (payload.get("best_flights") or []) + (payload.get("other_flights") or [])
-        offers = [_parse_serpapi_flight(f, currency) for f in raw[:max_results]]
+        offers = [_parse_flight(f, currency) for f in raw[:max_results]]
         return {
             "origin": origin,
             "destination": destination,
@@ -136,9 +109,9 @@ def amadeus_search_flights(input: dict[str, Any]) -> dict[str, Any]:
 
 
 TOOLS: dict[str, ToolDef] = {
-    "amadeus_search_flights": ToolDef(
-        name="amadeus_search_flights",
-        description="Search live Google Flights data for a route and date via SerpAPI.",
+    "google_search_flights": ToolDef(
+        name="google_search_flights",
+        description="Search live Google Flights data for a route and date via SerpAPI. Requires SERPAPI_KEY.",
         input_schema={
             "type": "object",
             "properties": {
@@ -153,7 +126,6 @@ TOOLS: dict[str, ToolDef] = {
             },
             "required": ["origin", "destination", "departure_date"],
         },
-        handler=amadeus_search_flights,
+        handler=google_search_flights,
     )
 }
-

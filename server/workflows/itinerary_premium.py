@@ -12,8 +12,8 @@ from pydantic import BaseModel, Field
 from backend.agents.mock_data import CUSTOMERS, TRIPS, find_by_id
 from server.agents.tools.activities import tripadvisor_activities
 from server.agents.tools.email_resend import resend_send_email
-from server.agents.tools.flights_amadeus import amadeus_search_flights
-from server.agents.tools.hotels_amadeus import amadeus_search_hotels
+from server.agents.tools.flights_amadeus import google_search_flights
+from server.agents.tools.hotels_amadeus import google_search_hotels
 from server.agents.tools.slack import slack_post_webhook
 from server.agents.tools.weather_openmeteo import openmeteo_forecast
 from server.llm.openai_client import chat
@@ -85,7 +85,7 @@ async def parse_validate(ctx: WorkflowContext) -> dict[str, Any]:
 async def search_flights(ctx: WorkflowContext) -> dict[str, Any]:
     request = ctx.result("parse_validate")["request"]
     result = await asyncio.to_thread(
-        amadeus_search_flights,
+        google_search_flights,
         {
             "origin": request["origin"],
             "destination": request["destination"],
@@ -102,14 +102,13 @@ async def search_flights(ctx: WorkflowContext) -> dict[str, Any]:
 async def search_hotels(ctx: WorkflowContext) -> dict[str, Any]:
     request = ctx.result("parse_validate")["request"]
     result = await asyncio.to_thread(
-        amadeus_search_hotels,
+        google_search_hotels,
         {
             "destination": request["destination"],
             "check_in": request["start_date"],
             "check_out": request["end_date"],
             "adults": request["travelers"],
-            "currency": "USD",
-            "max_hotels": 15,
+            "max_results": 15,
         },
     )
     return {"hotels": result}

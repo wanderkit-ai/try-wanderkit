@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/page-header';
 import { TableShell, Th, Td } from '@/components/table-shell';
-import { AgentChat } from '@/components/agent-chat';
+import { ScoutAgentLayout } from '@/components/scout-agent-layout';
 import { operators, trips, quotes } from '@/lib/mock-data';
 import { Search, Star, MessageCircle, X } from 'lucide-react';
 
@@ -153,8 +153,8 @@ export default function OperatorsPage() {
         </form>
 
         {activeSearch && (
-          <div className="surface p-1">
-            <AgentChat
+          <div className="surface overflow-hidden">
+            <ScoutAgentLayout
               key={activeSearch}
               config={{
                 name: 'scout',

@@ -113,6 +113,8 @@ const search_operators: ToolDef = {
         replyTimeHours: o.responseHours,
         priceTier: o.priceTier,
         whatsapp: o.whatsapp,
+        email: (o as { email?: string }).email,
+        website: (o as { website?: string }).website,
       }));
   },
 };
@@ -490,6 +492,190 @@ const add_operator: ToolDef = {
   },
 };
 
+// ─── Flight search (real APIs, server-side) ──────────────────────────────────
+
+const amadeus_search_flights: ToolDef = {
+  name: 'amadeus_search_flights',
+  description: 'Search flights via Amadeus/SerpAPI (Google Flights data). Primary flight source.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      origin: { type: 'string', description: 'Departure city or airport code' },
+      destination: { type: 'string', description: 'Arrival city or airport code' },
+      depart_date: { type: 'string', description: 'ISO date YYYY-MM-DD' },
+      return_date: { type: 'string', description: 'ISO return date' },
+      passengers: { type: 'number', description: 'Number of passengers' },
+    },
+    required: ['origin', 'destination', 'depart_date', 'passengers'],
+  },
+  handler: () => ({ note: 'Handled server-side' }),
+};
+
+const skyscanner_search_flights: ToolDef = {
+  name: 'skyscanner_search_flights',
+  description: 'Search flights via Skyscanner (RapidAPI). Fallback flight source.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      origin: { type: 'string', description: 'Departure city or airport code' },
+      destination: { type: 'string', description: 'Arrival city or airport code' },
+      depart_date: { type: 'string', description: 'ISO date YYYY-MM-DD' },
+      return_date: { type: 'string', description: 'ISO return date' },
+      passengers: { type: 'number' },
+    },
+    required: ['origin', 'destination', 'depart_date', 'passengers'],
+  },
+  handler: () => ({ note: 'Handled server-side' }),
+};
+
+const kiwi_search_flights: ToolDef = {
+  name: 'kiwi_search_flights',
+  description: 'Search cheapest flights via Kiwi/Tequila API. Last-resort flight source.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      origin: { type: 'string', description: 'Departure city or airport code' },
+      destination: { type: 'string', description: 'Arrival city or airport code' },
+      depart_date: { type: 'string', description: 'ISO date YYYY-MM-DD' },
+      return_date: { type: 'string' },
+      passengers: { type: 'number' },
+    },
+    required: ['origin', 'destination', 'depart_date', 'passengers'],
+  },
+  handler: () => ({ note: 'Handled server-side' }),
+};
+
+// ─── Hotel search (real APIs, server-side) ───────────────────────────────────
+
+const booking_search_hotels: ToolDef = {
+  name: 'booking_search_hotels',
+  description: 'Search hotels via Booking.com (RapidAPI). Primary hotel source.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      destination: { type: 'string' },
+      check_in: { type: 'string', description: 'ISO date YYYY-MM-DD' },
+      check_out: { type: 'string', description: 'ISO date YYYY-MM-DD' },
+      guests: { type: 'number' },
+    },
+    required: ['destination', 'check_in', 'check_out', 'guests'],
+  },
+  handler: () => ({ note: 'Handled server-side' }),
+};
+
+const amadeus_search_hotels: ToolDef = {
+  name: 'amadeus_search_hotels',
+  description: 'Search hotels via Amadeus API. Fallback hotel source.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      destination: { type: 'string' },
+      check_in: { type: 'string' },
+      check_out: { type: 'string' },
+      guests: { type: 'number' },
+    },
+    required: ['destination'],
+  },
+  handler: () => ({ note: 'Handled server-side' }),
+};
+
+// ─── Activities (real APIs, server-side) ─────────────────────────────────────
+
+const viator_search_activities: ToolDef = {
+  name: 'viator_search_activities',
+  description: 'Search tours and activities via Viator partner API.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      destination: { type: 'string' },
+      limit: { type: 'number' },
+    },
+    required: ['destination'],
+  },
+  handler: () => ({ note: 'Handled server-side' }),
+};
+
+const tripadvisor_activities: ToolDef = {
+  name: 'tripadvisor_activities',
+  description: 'Fetch top activities and attractions for a destination via TripAdvisor.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      destination: { type: 'string' },
+      limit: { type: 'number' },
+    },
+    required: ['destination'],
+  },
+  handler: () => ({ note: 'Handled server-side' }),
+};
+
+// ─── Weather (real APIs, server-side) ────────────────────────────────────────
+
+const openweathermap_forecast: ToolDef = {
+  name: 'openweathermap_forecast',
+  description: 'Get 5-day weather forecast via OpenWeatherMap API.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      destination: { type: 'string' },
+      days: { type: 'number' },
+      units: { type: 'string', enum: ['metric', 'imperial'] },
+    },
+    required: ['destination'],
+  },
+  handler: () => ({ note: 'Handled server-side' }),
+};
+
+const openmeteo_forecast: ToolDef = {
+  name: 'openmeteo_forecast',
+  description: 'Get a multi-day weather forecast via Open-Meteo (free, no key needed).',
+  input_schema: {
+    type: 'object',
+    properties: {
+      destination: { type: 'string' },
+      forecast_days: { type: 'number' },
+    },
+    required: ['destination'],
+  },
+  handler: () => ({ note: 'Handled server-side' }),
+};
+
+// ─── Legacy stubs (kept for backward compat) ─────────────────────────────────
+
+const search_flights: ToolDef = {
+  name: 'search_flights',
+  description: 'Search and rank flight options between an origin and destination.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      origin: { type: 'string' },
+      destination: { type: 'string' },
+      depart_date: { type: 'string' },
+      return_date: { type: 'string' },
+      passengers: { type: 'number' },
+    },
+    required: ['origin', 'destination', 'depart_date', 'passengers'],
+  },
+  handler: () => ({ note: 'Handled server-side' }),
+};
+
+const search_hotels: ToolDef = {
+  name: 'search_hotels',
+  description: 'Search and rank hotel options for a destination.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      destination: { type: 'string' },
+      check_in: { type: 'string' },
+      check_out: { type: 'string' },
+      nights: { type: 'number' },
+      guests: { type: 'number' },
+    },
+    required: ['destination'],
+  },
+  handler: () => ({ note: 'Handled server-side' }),
+};
+
 // ─── Itinerary tools ────────────────────────────────────────────────────────
 
 const generate_itinerary: ToolDef = {
@@ -535,27 +721,70 @@ const generate_itinerary: ToolDef = {
   },
 };
 
-const save_itinerary: ToolDef = {
-  name: 'save_itinerary',
-  description: 'Persist a generated itinerary to a trip. Pass the itinerary array returned by generate_itinerary.',
+const ITINERARY_DAY_SCHEMA = {
+  type: 'object' as const,
+  properties: {
+    day: { type: 'number' },
+    date: { type: 'string' },
+    location: { type: 'string' },
+    activities: { type: 'array', items: { type: 'string' } },
+    transit: { type: 'string' },
+    lodging: { type: 'string' },
+    weather_note: { type: 'string' },
+    morning: { type: 'string' },
+    afternoon: { type: 'string' },
+    evening: { type: 'string' },
+    featured_activity: { type: 'string' },
+  },
+};
+
+const preview_itinerary: ToolDef = {
+  name: 'preview_itinerary',
+  description:
+    'Stream a draft itinerary into the live UI side panel without persisting it. Call this whenever you have a working day-by-day plan to show the user, and re-call after every refinement. The result is for display only; use save_itinerary once the admin approves.',
   input_schema: {
     type: 'object',
     properties: {
       trip_id: { type: 'string' },
-      itinerary: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            day: { type: 'number' },
-            date: { type: 'string' },
-            location: { type: 'string' },
-            activities: { type: 'array', items: { type: 'string' } },
-            transit: { type: 'string' },
-            lodging: { type: 'string' },
-          },
-        },
-      },
+      destination: { type: 'string' },
+      totalDays: { type: 'number' },
+      itinerary: { type: 'array', items: ITINERARY_DAY_SCHEMA },
+    },
+    required: ['itinerary'],
+  },
+  handler: ({ trip_id, destination, totalDays, itinerary }) => ({
+    tripId: trip_id ?? null,
+    destination: destination ?? null,
+    totalDays: totalDays ?? (Array.isArray(itinerary) ? itinerary.length : 0),
+    itinerary,
+    preview: true,
+  }),
+};
+
+const build_itinerary: ToolDef = {
+  name: 'build_itinerary',
+  description: 'Build and persist a complete itinerary for a trip. Used by the itinerary agent.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      trip_id: { type: 'string' },
+      itinerary: { type: 'array', items: ITINERARY_DAY_SCHEMA },
+    },
+    required: ['trip_id', 'itinerary'],
+  },
+  handler: () => ({ note: 'Handled server-side' }),
+};
+
+const save_itinerary: ToolDef = {
+  name: 'save_itinerary',
+  description: 'Persist the approved itinerary onto the matching trip record. Only call once the admin explicitly approves a draft.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      trip_id: { type: 'string' },
+      destination: { type: 'string' },
+      totalDays: { type: 'number' },
+      itinerary: { type: 'array', items: ITINERARY_DAY_SCHEMA },
     },
     required: ['trip_id', 'itinerary'],
   },
@@ -594,7 +823,20 @@ const ALL: Record<string, ToolDef> = {
   web_search_operators,
   add_operator,
   generate_itinerary,
+  preview_itinerary,
   save_itinerary,
+  build_itinerary,
+  search_flights,
+  search_hotels,
+  amadeus_search_flights,
+  skyscanner_search_flights,
+  kiwi_search_flights,
+  booking_search_hotels,
+  amadeus_search_hotels,
+  viator_search_activities,
+  tripadvisor_activities,
+  openweathermap_forecast,
+  openmeteo_forecast,
 };
 
 export function toolsFor(names: string[]): ToolDef[] {
