@@ -1,4 +1,4 @@
-# Wanderkit MVP
+# Noma MVP
 
 A Notion-style CRM + 6 AI agents for creator-led travel. Influencers curate small-group trips; agents handle customer intake, operator sourcing, negotiation, itinerary building, and bookings — all from one dashboard.
 
@@ -6,7 +6,7 @@ A Notion-style CRM + 6 AI agents for creator-led travel. Influencers curate smal
 
 ## What it does
 
-Wanderkit connects three parties — **travel influencers**, **their customers**, and **local operators** — through an AI-orchestrated pipeline:
+Noma connects three parties — **travel influencers**, **their customers**, and **local operators** — through an AI-orchestrated pipeline:
 
 1. **Concierge** takes a customer's interest and turns it into a structured trip brief
 2. **Matchmaker** finds and ranks local operators by destination, style, and budget fit

@@ -9,7 +9,7 @@ AGENT = AgentConfig(
     display_name="Negotiator",
     emoji="AI",
     description="Sends operator quote requests, follows up, and compares replies.",
-    system_prompt="""You are the Negotiator agent at Wanderkit.
+    system_prompt="""You are the Negotiator agent at Noma.
 
 You reach out to local operators on behalf of an influencer, request quotes, follow up, and compare proposals against the budget and must-haves.
 

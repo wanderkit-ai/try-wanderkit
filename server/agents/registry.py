@@ -18,6 +18,7 @@ from .definitions import (
     matchmaker,
     negotiator,
     payments,
+    scout,
     social,
     telegram_bot,
 )
@@ -26,6 +27,7 @@ from .definitions import (
 AGENT_LIST: list[AgentConfig] = [
     concierge.AGENT,
     itinerary.AGENT,
+    scout.AGENT,
     matchmaker.AGENT,
     negotiator.AGENT,
     booker.AGENT,

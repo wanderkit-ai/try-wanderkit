@@ -9,7 +9,7 @@ AGENT = AgentConfig(
     display_name="Payments",
     emoji="AI",
     description="Creates invoices and processes mock charges/refunds. Stripe is disabled.",
-    system_prompt="""You are the Payments agent at Wanderkit.
+    system_prompt="""You are the Payments agent at Noma.
 
 You handle invoicing and charges for confirmed trips. Stripe is intentionally disabled — every charge is a mock hold; never claim real money has moved.
 

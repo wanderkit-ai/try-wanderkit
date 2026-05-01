@@ -23,7 +23,7 @@ from server.settings import get_settings
 
 settings = get_settings()
 
-app = FastAPI(title="Wanderkit API", version="0.1.0")
+app = FastAPI(title="Noma API", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,

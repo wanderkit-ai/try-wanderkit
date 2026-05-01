@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+import re
 from typing import Any
 
 import httpx
@@ -23,7 +23,9 @@ def tripadvisor_activities(params: dict[str, Any]) -> dict[str, Any]:
         return {"error": "destination is required", "activities": []}
 
     if settings.tripadvisor_api_key:
-        return _fetch_tripadvisor_api(destination, limit, settings.tripadvisor_api_key)
+        result = _fetch_tripadvisor_api(destination, limit, settings.tripadvisor_api_key)
+        if not result.get("error"):
+            return result
 
     if settings.firecrawl_api_key:
         return _fetch_firecrawl_fallback(destination, limit, settings.firecrawl_api_key)
@@ -68,6 +70,45 @@ def _fetch_tripadvisor_api(destination: str, limit: int, api_key: str) -> dict[s
         return {"error": str(exc), "activities": []}
 
 
+def _parse_activities_from_markdown(markdown: str, limit: int) -> list[dict[str, Any]]:
+    """Extract structured activities from TripAdvisor search result markdown."""
+    activities: list[dict[str, Any]] = []
+    # Match markdown links that point to TripAdvisor attraction/review pages
+    pattern = re.compile(
+        r'\[([^\]]+)\]\((https://www\.tripadvisor\.com/Attraction_Review[^\)]+)\)'
+    )
+    # Rating pattern: "4.9" appearing near "of 5 bubbles"
+    rating_pattern = re.compile(r'(\d+\.\d+)\s*\n*\s*\d+\.\d+ of 5 bubbles')
+    # Reviews pattern: "(545 reviews)"
+    reviews_pattern = re.compile(r'\((\d[\d,]*) reviews?\)')
+
+    seen: set[str] = set()
+    # Walk through matches and grab ratings/reviews from surrounding context
+    for m in pattern.finditer(markdown):
+        name = m.group(1).strip()
+        url = m.group(2).strip()
+        if name in seen or len(name) < 3:
+            continue
+        seen.add(name)
+
+        # Look in the 300 chars after the link for rating and reviews
+        context = markdown[m.end(): m.end() + 300]
+        rating_m = rating_pattern.search(context)
+        reviews_m = reviews_pattern.search(context)
+
+        activities.append({
+            "name": name,
+            "url": url,
+            "rating": float(rating_m.group(1)) if rating_m else None,
+            "reviews": int(reviews_m.group(1).replace(",", "")) if reviews_m else None,
+            "source": "tripadvisor",
+        })
+        if len(activities) >= limit:
+            break
+
+    return activities
+
+
 def _fetch_firecrawl_fallback(destination: str, limit: int, api_key: str) -> dict[str, Any]:
     url = "https://api.firecrawl.dev/v1/scrape"
     target = f"https://www.tripadvisor.com/Search?q={destination}+attractions"
@@ -81,11 +122,15 @@ def _fetch_firecrawl_fallback(destination: str, limit: int, api_key: str) -> dic
         resp.raise_for_status()
         data = resp.json()
         markdown = (data.get("data") or {}).get("markdown") or ""
-        return {
-            "activities": [{"name": "See scraped content", "description": markdown[:3000]}],
-            "source": "firecrawl_fallback",
-            "raw_markdown": markdown[:3000],
-        }
+        activities = _parse_activities_from_markdown(markdown, limit)
+        if not activities:
+            # Parser found nothing — surface minimal info so agent can still proceed
+            return {
+                "activities": [],
+                "source": "firecrawl_fallback",
+                "note": "Could not parse activities from scraped page. No TRIPADVISOR_API_KEY set.",
+            }
+        return {"activities": activities, "source": "firecrawl_fallback"}
     except Exception as exc:
         return {"error": str(exc), "activities": []}
 

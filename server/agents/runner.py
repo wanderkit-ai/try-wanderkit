@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from collections.abc import AsyncGenerator
 from typing import Any
@@ -39,12 +40,12 @@ class AgentRunner:
         tools = to_anthropic_tools(self.tool_defs)
 
         safety = 0
-        while safety < 8:
+        while safety < 16:
             safety += 1
             try:
                 response = await client.messages.create(
                     model=settings.anthropic_model,
-                    max_tokens=1500,
+                    max_tokens=8192,
                     system=self.config.system_prompt,
                     tools=tools or None,
                     messages=conversation,
@@ -78,9 +79,11 @@ class AgentRunner:
                 yield {"type": "done"}
                 return
 
+            results = await asyncio.gather(
+                *[self._call_tool(tu["name"], tu["input"]) for tu in tool_uses]
+            )
             tool_results = []
-            for tool_use in tool_uses:
-                result = await self._call_tool(tool_use["name"], tool_use["input"])
+            for tool_use, result in zip(tool_uses, results):
                 yield {"type": "tool_result", "name": tool_use["name"], "result": result}
                 tool_results.append(
                     {
@@ -95,10 +98,10 @@ class AgentRunner:
         yield {"type": "error", "message": "Agent exceeded maximum tool-loop depth."}
 
     async def _call_tool(self, name: str, input: dict[str, Any]) -> Any:
-        tool = next((tool for tool in self.tool_defs if tool.name == name), None)
+        tool = next((t for t in self.tool_defs if t.name == name), None)
         if not tool:
             return {"error": f"Unknown tool {name}"}
         try:
-            return tool.handler(input)
+            return await asyncio.to_thread(tool.handler, input)
         except Exception as exc:
             return {"error": str(exc) or "Tool failed"}

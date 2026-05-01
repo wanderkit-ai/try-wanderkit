@@ -1,4 +1,4 @@
-# Wanderkit FastAPI Server
+# Noma FastAPI Server
 
 This is the new Python backend for the active client/server app. The original TypeScript/Next implementation remains untouched under `_legacy`.
 

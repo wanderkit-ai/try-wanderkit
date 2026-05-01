@@ -7,58 +7,104 @@ from typing import Any
 from ._shared import ToolDef
 
 
-# Realistic-feeling mock catalog of flight options. The handler ranks slices
-# of this list by destination match + max_price filter; layovers and prices
-# are deterministic so repeated calls return stable rankings.
+# Richer mock catalog with flight numbers, times, and AI scoring.
+# ai_score balances nonstop preference, price, and reasonable duration.
 _AIRLINE_OPTIONS = [
-    {"airline": "LATAM", "layovers": 1, "base_price_usd": 1240, "duration_hours": 14},
-    {"airline": "Avianca", "layovers": 1, "base_price_usd": 1180, "duration_hours": 16},
-    {"airline": "JetBlue", "layovers": 0, "base_price_usd": 1480, "duration_hours": 9},
-    {"airline": "United", "layovers": 1, "base_price_usd": 1340, "duration_hours": 12},
-    {"airline": "Air France", "layovers": 1, "base_price_usd": 1390, "duration_hours": 13},
-    {"airline": "Turkish Airlines", "layovers": 1, "base_price_usd": 1095, "duration_hours": 18},
+    {
+        "airline": "JetBlue", "code": "B6", "flight_suffix": "421",
+        "layovers": 0, "base_price_usd": 1480, "duration_hours": 9,
+        "depart_time": "07:00", "arrive_time": "16:15",
+        "ai_score_base": 92,
+        "ai_reason": "Only nonstop option — saves 4–6 hours vs any layover. Best choice if you value arrival energy.",
+    },
+    {
+        "airline": "Air France", "code": "AF", "flight_suffix": "038",
+        "layovers": 1, "base_price_usd": 1390, "duration_hours": 13,
+        "depart_time": "14:25", "arrive_time": "08:10+1",
+        "ai_score_base": 86,
+        "ai_reason": "Well-regarded carrier, comfortable CDG layover, arrives at a good hour for check-in.",
+    },
+    {
+        "airline": "United", "code": "UA", "flight_suffix": "872",
+        "layovers": 1, "base_price_usd": 1340, "duration_hours": 12,
+        "depart_time": "11:40", "arrive_time": "23:55",
+        "ai_score_base": 83,
+        "ai_reason": "Mid-range price, morning departure, efficient EWR layover. Solid all-around.",
+    },
+    {
+        "airline": "LATAM", "code": "LA", "flight_suffix": "505",
+        "layovers": 1, "base_price_usd": 1240, "duration_hours": 14,
+        "depart_time": "09:30", "arrive_time": "23:45+1",
+        "ai_score_base": 79,
+        "ai_reason": "Good value — 15% cheaper than the nonstop. Slightly longer journey but reasonable timing.",
+    },
+    {
+        "airline": "Avianca", "code": "AV", "flight_suffix": "246",
+        "layovers": 1, "base_price_usd": 1180, "duration_hours": 16,
+        "depart_time": "22:15", "arrive_time": "14:30+1",
+        "ai_score_base": 75,
+        "ai_reason": "Cheapest option. Late-night departure and 16-hour journey — best for strict budget travellers.",
+    },
+    {
+        "airline": "Turkish Airlines", "code": "TK", "flight_suffix": "033",
+        "layovers": 1, "base_price_usd": 1095, "duration_hours": 18,
+        "depart_time": "02:00", "arrive_time": "20:15+1",
+        "ai_score_base": 70,
+        "ai_reason": "Lowest price but overnight departure and 18-hour journey is exhausting. Last resort.",
+    },
 ]
 
 
 def _search_flights(input: dict[str, Any]) -> dict[str, Any]:
-    """Return a price-ranked list of flight options for a route.
+    """Return a scored, ranked list of flight options for a route.
 
-    Mock: prices are nudged by destination string length so different
-    destinations produce different orderings, but the same destination is
-    deterministic across calls.
+    Mock: prices and scores are nudged by destination string length so
+    different destinations produce different orderings, but the same
+    destination is deterministic across calls.
     """
-    origin = (input.get("origin") or "").upper()
-    destination = (input.get("destination") or "").upper()
+    origin = (input.get("origin") or "").strip()
+    destination = (input.get("destination") or "").strip()
     max_price = input.get("max_price")
     passengers = int(input.get("passengers") or 1)
 
     if not origin or not destination:
         return {"error": "origin and destination are required"}
 
-    nudge = (len(destination) * 7) % 90  # Stable per-destination price nudge
+    nudge = (len(destination) * 7) % 90
     options = []
-    for opt in _AIRLINE_OPTIONS:
+    for i, opt in enumerate(_AIRLINE_OPTIONS):
         per_pax = opt["base_price_usd"] + nudge
         if max_price and per_pax > max_price:
             continue
+        score = max(0, opt["ai_score_base"] - (nudge // 20))
         options.append(
             {
                 "airline": opt["airline"],
+                "flight_number": f"{opt['code']} {int(opt['flight_suffix']) + (nudge % 50)}",
                 "layovers": opt["layovers"],
-                "durationHours": opt["duration_hours"],
-                "perPaxUsd": per_pax,
-                "totalUsd": per_pax * passengers,
+                "duration_hours": opt["duration_hours"],
+                "departure_time": opt["depart_time"],
+                "arrival_time": opt["arrive_time"],
+                "per_pax_usd": per_pax,
+                "total_usd": per_pax * passengers,
+                "ai_score": score,
+                "ai_reason": opt["ai_reason"],
+                "recommended": False,
             }
         )
-    options.sort(key=lambda o: (o["perPaxUsd"], o["layovers"]))
+
+    options.sort(key=lambda o: -o["ai_score"])
+    if options:
+        options[0]["recommended"] = True
 
     return {
         "origin": origin,
         "destination": destination,
         "passengers": passengers,
-        "departDate": input.get("depart_date"),
-        "returnDate": input.get("return_date"),
+        "depart_date": input.get("depart_date"),
+        "return_date": input.get("return_date"),
         "options": options[:5],
+        "top_pick": options[0] if options else None,
         "note": "[mock] Real search would use Duffel. Prices are illustrative.",
     }
 

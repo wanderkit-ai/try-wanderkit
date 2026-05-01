@@ -1,4 +1,4 @@
-"""Seed fixtures for the Wanderkit CRM. Mirrors lib/mock-data.ts on the Next.js side."""
+"""Seed fixtures for the Noma CRM. Mirrors lib/mock-data.ts on the Next.js side."""
 
 from typing import Any
 
@@ -39,6 +39,7 @@ OPERATORS: list[dict[str, Any]] = [
         "country": "Argentina", "region": "Patagonia",
         "specialties": ["expedition", "hiking"], "rating": 4.8, "responseHours": 4,
         "priceTier": "$$",
+        "website": "https://andestours.ar",
         "notes": "Reliable. Speaks fluent English. Owns mountain lodge.",
     },
     {

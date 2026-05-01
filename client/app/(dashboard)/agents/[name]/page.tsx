@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import { AGENT_LIST } from '@/lib/agents/registry';
 import { AgentChat } from '@/components/agent-chat';
+import { ItineraryAgentLayout } from '@/components/itinerary-agent-layout';
+import { ScoutAgentLayout } from '@/components/scout-agent-layout';
 import { PageHeader } from '@/components/page-header';
 
 export default function AgentPage({
@@ -21,6 +23,16 @@ export default function AgentPage({
       : `Research and build the itinerary for trip ${searchParams.trip}`
     : undefined;
 
+  const agentConfig = {
+    name: config.name,
+    displayName: config.displayName,
+    description: config.description,
+    emoji: config.emoji,
+    starters: config.starters,
+    toolCount: config.tools.length,
+    initialMessage,
+  };
+
   return (
     <>
       <PageHeader
@@ -29,19 +41,19 @@ export default function AgentPage({
         crumbs={[{ label: 'Agents' }, { label: config.displayName }]}
         description={config.description}
       />
-      <div className="px-12 pb-6">
-        <AgentChat
-          config={{
-            name: config.name,
-            displayName: config.displayName,
-            description: config.description,
-            emoji: config.emoji,
-            starters: config.starters,
-            toolCount: config.tools.length,
-            initialMessage,
-          }}
-        />
-      </div>
+      {config.name === 'itinerary' ? (
+        <div className="px-6 pb-6">
+          <ItineraryAgentLayout config={agentConfig} />
+        </div>
+      ) : config.name === 'scout' ? (
+        <div className="px-6 pb-6">
+          <ScoutAgentLayout config={agentConfig} />
+        </div>
+      ) : (
+        <div className="px-12 pb-6">
+          <AgentChat config={agentConfig} />
+        </div>
+      )}
     </>
   );
 }

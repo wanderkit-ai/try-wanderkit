@@ -48,9 +48,9 @@ async def compose_email(ctx: WorkflowContext) -> dict[str, Any]:
                 "role": "system",
                 "content": (
                     "You are a travel business development specialist. Write a concise, personalized "
-                    "cold outreach email for the Wanderkit travel CRM platform. "
+                    "cold outreach email for the Noma travel CRM platform. "
                     "Keep the subject under 10 words. Keep the body under 150 words. "
-                    "Focus on how Wanderkit can help them manage travel clients better. "
+                    "Focus on how Noma can help them manage travel clients better. "
                     "Return strict JSON only."
                 ),
             },
@@ -76,7 +76,7 @@ async def compose_email(ctx: WorkflowContext) -> dict[str, Any]:
     content = response.choices[0].message.content or "{}"
     email_draft = json.loads(content)
     return {
-        "subject": email_draft.get("subject", f"Wanderkit for {lead.get('company', 'your business')}"),
+        "subject": email_draft.get("subject", f"Noma for {lead.get('company', 'your business')}"),
         "body_html": email_draft.get("body_html", ""),
         "body_text": email_draft.get("body_text", ""),
     }

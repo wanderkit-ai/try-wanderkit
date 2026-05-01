@@ -14,12 +14,10 @@ import {
   Calendar,
   Users,
   DollarSign,
-  Train,
-  Bed,
   CheckCircle2,
   Minus,
-  Circle,
 } from 'lucide-react';
+import { ItineraryTimeline } from '@/components/itinerary-timeline';
 import { ProposalActions } from './actions';
 
 export default function ProposalPage({ params }: { params: { id: string } }) {
@@ -163,55 +161,7 @@ export default function ProposalPage({ params }: { params: { id: string } }) {
           </h2>
 
           {trip.itinerary && trip.itinerary.length > 0 ? (
-            <div
-              className="rounded-lg divide-y"
-              style={{
-                background: 'hsl(var(--panel))',
-                border: '1px solid hsl(var(--border))',
-                borderColor: 'hsl(var(--border))',
-              }}
-            >
-              {trip.itinerary.map((day) => (
-                <div key={day.day} className="p-4 sm:p-5">
-                  <div className="flex items-baseline gap-2 mb-2">
-                    <span
-                      className="text-xs font-semibold font-mono"
-                      style={{ color: 'hsl(var(--accent))' }}
-                    >
-                      Day {day.day}
-                    </span>
-                    <span className="text-sm font-medium text-ink">{day.location}</span>
-                    <span className="text-xs text-muted font-mono ml-auto">{day.date}</span>
-                  </div>
-
-                  <ul className="space-y-1 mb-3">
-                    {day.activities.map((a) => (
-                      <li key={a} className="flex items-start gap-2 text-sm text-ink2">
-                        <Circle className="w-1.5 h-1.5 mt-1.5 shrink-0 fill-current text-muted" />
-                        {a}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {(day.transit !== 'None' || day.lodging) && (
-                    <div className="flex flex-wrap gap-4 text-xs text-muted border-t pt-2" style={{ borderColor: 'hsl(var(--border))' }}>
-                      {day.transit && day.transit !== 'None' && (
-                        <span className="flex items-center gap-1">
-                          <Train className="w-3 h-3" strokeWidth={1.5} />
-                          {day.transit}
-                        </span>
-                      )}
-                      {day.lodging && day.lodging !== 'None (departure day)' && (
-                        <span className="flex items-center gap-1">
-                          <Bed className="w-3 h-3" strokeWidth={1.5} />
-                          {day.lodging}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+            <ItineraryTimeline days={trip.itinerary} compact />
           ) : (
             <div
               className="rounded-lg p-6 text-center text-sm text-muted"
@@ -298,7 +248,7 @@ export default function ProposalPage({ params }: { params: { id: string } }) {
         {/* Footer */}
         <div className="mt-12 pt-6 border-t text-center text-xs text-muted" style={{ borderColor: 'hsl(var(--border))' }}>
           Powered by{' '}
-          <span className="font-medium" style={{ color: 'hsl(var(--accent))' }}>Wanderkit</span>
+          <span className="font-medium" style={{ color: 'hsl(var(--accent))' }}>Noma</span>
           {' '}· AI-coordinated travel for creators and their communities
         </div>
       </div>

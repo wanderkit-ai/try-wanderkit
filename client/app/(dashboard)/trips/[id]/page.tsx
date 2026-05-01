@@ -20,6 +20,7 @@ import {
 import { formatMoney, formatRelative } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
 import type { Customer } from '@/lib/types';
+import { ItineraryTimeline } from '@/components/itinerary-timeline';
 import {
   Calendar,
   MapPin,
@@ -32,8 +33,6 @@ import {
   Circle,
   MapPinned,
   Plane,
-  Train,
-  Bed,
   Clock,
   UserCheck,
   UserX,
@@ -237,42 +236,7 @@ export default function TripDetailPage({ params }: { params: { id: string } }) {
             />
           </div>
           {trip.itinerary && trip.itinerary.length > 0 ? (
-            <div className="surface divide-y divide-border">
-              {trip.itinerary.map((day) => (
-                <div key={day.day} className="p-4">
-                  <div className="flex items-baseline gap-2 mb-2">
-                    <span className="text-xs font-mono font-medium text-accent">Day {day.day}</span>
-                    <span className="text-xs text-muted">·</span>
-                    <span className="text-sm font-medium text-ink">{day.location}</span>
-                    <span className="text-xs text-muted font-mono">{day.date}</span>
-                  </div>
-                  <ul className="space-y-0.5 mb-2">
-                    {day.activities.map((a) => (
-                      <li key={a} className="flex items-start gap-1.5 text-xs text-ink2">
-                        <Circle className="w-1.5 h-1.5 mt-1 shrink-0 fill-current" />
-                        {a}
-                      </li>
-                    ))}
-                  </ul>
-                  {(day.transit !== 'None' || day.lodging) && (
-                    <div className="flex gap-4 text-2xs text-muted mt-1">
-                      {day.transit && day.transit !== 'None' && (
-                        <span className="flex items-center gap-1">
-                          <Train className="w-3 h-3" strokeWidth={1.5} />
-                          {day.transit}
-                        </span>
-                      )}
-                      {day.lodging && (
-                        <span className="flex items-center gap-1">
-                          <Bed className="w-3 h-3" strokeWidth={1.5} />
-                          {day.lodging}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+            <ItineraryTimeline days={trip.itinerary} />
           ) : (
             <div className="surface p-4 text-sm text-muted flex items-center gap-2">
               <MapPinned className="w-4 h-4 text-muted" strokeWidth={1.5} />

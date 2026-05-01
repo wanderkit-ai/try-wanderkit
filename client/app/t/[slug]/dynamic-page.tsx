@@ -37,7 +37,7 @@ export function DynamicTripPage({ slug }: { slug: string }) {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    const raw = localStorage.getItem(`wanderkit:trip:${slug}`);
+    const raw = localStorage.getItem(`noma:trip:${slug}`);
     setTrip(raw ? (JSON.parse(raw) as DynamicTrip) : null);
   }, [slug]);
 
@@ -209,7 +209,7 @@ export function DynamicTripPage({ slug }: { slug: string }) {
         </div>
 
         <p className="text-center text-xs text-stone-400 pb-4">
-          Powered by <span className="font-medium text-stone-500">Wanderkit</span>
+          Powered by <span className="font-medium text-stone-500">Noma</span>
         </p>
       </div>
     </div>

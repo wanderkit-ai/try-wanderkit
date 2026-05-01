@@ -9,8 +9,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT = Path(__file__).resolve().parents[1]
 
+# Load base .env first, then .env.local overrides it
+load_dotenv(ROOT / ".env")
 load_dotenv(ROOT / ".env.local", override=True)
-load_dotenv(ROOT / ".env", override=True)
 
 
 class Settings(BaseSettings):
@@ -18,8 +19,6 @@ class Settings(BaseSettings):
     anthropic_model: str = Field(default="claude-sonnet-4-6", alias="ANTHROPIC_MODEL")
     openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL")
-    amadeus_client_id: Optional[str] = Field(default=None, alias="AMADEUS_CLIENT_ID")
-    amadeus_client_secret: Optional[str] = Field(default=None, alias="AMADEUS_CLIENT_SECRET")
     serpapi_key: Optional[str] = Field(default=None, alias="SERPAPI_KEY")
     resend_api_key: Optional[str] = Field(default=None, alias="RESEND_API_KEY")
     resend_from: Optional[str] = Field(default=None, alias="RESEND_FROM")
@@ -29,6 +28,11 @@ class Settings(BaseSettings):
     google_service_account_json: Optional[str] = Field(default=None, alias="GOOGLE_SERVICE_ACCOUNT_JSON")
     gsheets_spreadsheet_id: Optional[str] = Field(default=None, alias="GSHEETS_SPREADSHEET_ID")
     tripadvisor_api_key: Optional[str] = Field(default=None, alias="TRIPADVISOR_API_KEY")
+    # ── Travel search APIs ────────────────────────────────────────────────────
+    # One RapidAPI key covers both Skyscanner and Booking.com (separate subscriptions on same key)
+    rapidapi_key: Optional[str] = Field(default=None, alias="RAPIDAPI_KEY")
+    # OpenWeatherMap — free 5-day forecast  https://openweathermap.org/api
+    openweathermap_api_key: Optional[str] = Field(default=None, alias="OPENWEATHERMAP_API_KEY")
     whatsapp_access_token: Optional[str] = Field(default=None, alias="WHATSAPP_ACCESS_TOKEN")
     whatsapp_phone_number_id: Optional[str] = Field(default=None, alias="WHATSAPP_PHONE_NUMBER_ID")
     whatsapp_verify_token: Optional[str] = Field(default=None, alias="WHATSAPP_VERIFY_TOKEN")

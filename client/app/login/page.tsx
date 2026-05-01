@@ -49,14 +49,14 @@ export default function LoginPage() {
       <div className="hidden lg:flex flex-col justify-between p-10 bg-sidebar border-r">
         <div className="flex items-center gap-2 text-ink">
           <Compass className="w-5 h-5 text-accent" strokeWidth={1.75} />
-          <span className="font-semibold">Wanderkit</span>
+          <span className="font-semibold">Noma</span>
         </div>
         <div className="space-y-6 max-w-md">
           <h1 className="text-3xl font-medium leading-snug text-ink">
             The CRM for travel that actually plans the trip.
           </h1>
           <p className="text-ink2 leading-relaxed">
-            Wanderkit is a workspace for travel creators, customers, and local operators —
+            Noma is a workspace for travel creators, customers, and local operators —
             with five AI agents that source operators, negotiate quotes, and book itineraries
             in the background while you do the human work.
           </p>
@@ -75,14 +75,14 @@ export default function LoginPage() {
             ))}
           </div>
         </div>
-        <p className="text-xs text-muted">© Wanderkit · 2026</p>
+        <p className="text-xs text-muted">© Noma · 2026</p>
       </div>
 
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <div className="lg:hidden flex items-center gap-2 mb-8 text-ink">
             <Compass className="w-5 h-5 text-accent" strokeWidth={1.75} />
-            <span className="font-semibold">Wanderkit</span>
+            <span className="font-semibold">Noma</span>
           </div>
 
           <h2 className="text-2xl font-medium text-ink">Sign in</h2>
@@ -166,7 +166,7 @@ export default function LoginPage() {
           </button>
 
           <p className="text-xs text-muted mt-6">
-            By continuing you agree to Wanderkit&apos;s terms.
+            By continuing you agree to Noma&apos;s terms.
           </p>
         </div>
       </div>

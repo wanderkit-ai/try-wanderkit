@@ -10,6 +10,32 @@ from backend.agents.mock_data import OPERATORS, QUOTES, TRIPS, find_by_id
 from ._shared import ToolDef
 
 
+def _list_trips(input: dict[str, Any]) -> list[dict[str, Any]]:
+    """List all trips, optionally filtered by status or destination keyword."""
+    status = input.get("status")
+    destination = (input.get("destination") or "").lower()
+    out = []
+    for t in TRIPS:
+        if status and t.get("status") != status:
+            continue
+        if destination and destination not in t.get("destination", "").lower() and destination not in t.get("title", "").lower():
+            continue
+        budget = t.get("budgetPerPerson", 0)
+        out.append({
+            "id": t["id"],
+            "title": t["title"],
+            "destination": t["destination"],
+            "status": t["status"],
+            "startDate": t["startDate"],
+            "endDate": t["endDate"],
+            "groupSize": t["groupSize"],
+            "style": t["style"],
+            "budgetPerPerson": f"${budget // 100}/pp/day" if budget else "unset",
+            "hasItinerary": bool(t.get("itinerary")),
+        })
+    return out
+
+
 def _get_trip(input: dict[str, Any]) -> dict[str, Any]:
     """Fetch a single trip brief by id. Returns {error} if not found."""
     trip = find_by_id(TRIPS, input.get("trip_id"))
@@ -54,6 +80,18 @@ def _draft_brief(input: dict[str, Any]) -> dict[str, Any]:
 
 
 TOOLS: dict[str, ToolDef] = {
+    "list_trips": ToolDef(
+        name="list_trips",
+        description="List all trips in the system. Use to find a trip by name or destination when no trip_id is provided.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "status": {"type": "string", "description": "Filter by status (brief, sourcing, quoting, approved, booked, completed, cancelled)"},
+                "destination": {"type": "string", "description": "Filter by destination keyword"},
+            },
+        },
+        handler=_list_trips,
+    ),
     "get_trip": ToolDef(
         name="get_trip",
         description="Fetch a trip brief by id.",

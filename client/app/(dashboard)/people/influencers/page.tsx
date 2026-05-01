@@ -10,7 +10,7 @@ export default function InfluencersPage() {
         icon="✨"
         title="Influencers"
         crumbs={[{ label: 'People' }, { label: 'Influencers' }]}
-        description="Travel creators who curate and sell trips on Wanderkit."
+        description="Travel creators who curate and sell trips on Noma."
       />
       <TableShell views={['Table', 'Cards']}>
         <div className="overflow-x-auto">

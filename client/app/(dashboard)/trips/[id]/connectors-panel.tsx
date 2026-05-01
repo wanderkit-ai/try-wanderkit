@@ -93,7 +93,7 @@ function initialConnections(tripId: string): Record<ConnectorId, ConnectorConnec
     google_drive: {
       state: 'ready',
       mcpServer: 'mcp-google-drive',
-      workspace: `Wanderkit/${tripId}`,
+      workspace: `Noma/${tripId}`,
     },
     gmail: {
       state: 'ready',
