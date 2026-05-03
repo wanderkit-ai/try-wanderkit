@@ -747,18 +747,47 @@ const preview_itinerary: ToolDef = {
     properties: {
       trip_id: { type: 'string' },
       destination: { type: 'string' },
+      origin: { type: 'string' },
       totalDays: { type: 'number' },
       itinerary: { type: 'array', items: ITINERARY_DAY_SCHEMA },
+      outbound_flight: { type: 'object' },
+      return_flight: { type: 'object' },
+      hotel: { type: 'object' },
+      cost_breakdown: { type: 'object' },
+      ai_summary: { type: 'string' },
     },
     required: ['itinerary'],
   },
-  handler: ({ trip_id, destination, totalDays, itinerary }) => ({
-    tripId: trip_id ?? null,
-    destination: destination ?? null,
-    totalDays: totalDays ?? (Array.isArray(itinerary) ? itinerary.length : 0),
-    itinerary,
-    preview: true,
-  }),
+  handler: (input) => {
+    const { trip_id, destination, origin, totalDays, itinerary, outbound_flight, return_flight, hotel, cost_breakdown, ai_summary } = input;
+    const days = totalDays ?? (Array.isArray(itinerary) ? itinerary.length : 0);
+    const result = {
+      tripId: trip_id ?? null,
+      destination: destination ?? null,
+      origin: origin ?? null,
+      totalDays: days,
+      itinerary,
+      outbound_flight: outbound_flight ?? null,
+      return_flight: return_flight ?? null,
+      hotel: hotel ?? null,
+      cost_breakdown: cost_breakdown ?? null,
+      ai_summary: ai_summary ?? null,
+      preview: true,
+      status: 'draft',
+    };
+    // Persist as draft in localStorage so trips page can show it
+    if (typeof window !== 'undefined') {
+      try {
+        const draftKey = `wanderkit:draft:${trip_id ?? Date.now()}`;
+        window.localStorage.setItem(draftKey, JSON.stringify({
+          ...result,
+          createdAt: new Date().toISOString(),
+          status: 'draft',
+        }));
+      } catch { /* ignore quota errors */ }
+    }
+    return result;
+  },
 };
 
 const build_itinerary: ToolDef = {
@@ -783,21 +812,49 @@ const save_itinerary: ToolDef = {
     properties: {
       trip_id: { type: 'string' },
       destination: { type: 'string' },
+      origin: { type: 'string' },
       totalDays: { type: 'number' },
       itinerary: { type: 'array', items: ITINERARY_DAY_SCHEMA },
+      outbound_flight: { type: 'object' },
+      return_flight: { type: 'object' },
+      hotel: { type: 'object' },
+      cost_breakdown: { type: 'object' },
+      ai_summary: { type: 'string' },
     },
-    required: ['trip_id', 'itinerary'],
+    required: ['itinerary'],
   },
-  handler: ({ trip_id, itinerary }) => {
-    const trip = findById(trips, trip_id);
-    if (!trip) return { error: 'Trip not found' };
-    trip.itinerary = itinerary as ItineraryDay[];
-    return {
+  handler: (input) => {
+    const { trip_id, itinerary, destination, origin, totalDays, outbound_flight, return_flight, hotel, cost_breakdown, ai_summary } = input;
+    const trip = trip_id ? findById(trips, trip_id) : null;
+    if (trip) {
+      trip.itinerary = itinerary as ItineraryDay[];
+    }
+    const days = totalDays ?? itinerary?.length ?? 0;
+    const result = {
       saved: true,
-      trip_id,
-      days: itinerary.length,
-      note: 'Itinerary saved. Visit the trip detail page or /proposals/' + trip_id + ' to preview.',
+      tripId: trip_id ?? null,
+      destination: destination ?? trip?.destination ?? null,
+      origin: origin ?? null,
+      totalDays: days,
+      itinerary,
+      outbound_flight: outbound_flight ?? null,
+      return_flight: return_flight ?? null,
+      hotel: hotel ?? null,
+      cost_breakdown: cost_breakdown ?? null,
+      ai_summary: ai_summary ?? null,
+      status: 'saved',
     };
+    // Update draft in localStorage to 'saved'
+    if (typeof window !== 'undefined') {
+      try {
+        const draftKey = `wanderkit:draft:${trip_id ?? Date.now()}`;
+        window.localStorage.setItem(draftKey, JSON.stringify({
+          ...result,
+          createdAt: new Date().toISOString(),
+        }));
+      } catch { /* ignore */ }
+    }
+    return result;
   },
 };
 

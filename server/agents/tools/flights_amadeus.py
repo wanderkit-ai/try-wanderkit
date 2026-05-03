@@ -45,11 +45,11 @@ def _parse_flight(flight: dict[str, Any], currency: str) -> dict[str, Any]:
 
 
 def google_search_flights(input: dict[str, Any]) -> dict[str, Any]:
-    """Search flights via SerpAPI Google Flights."""
+    """Search flights via SerpAPI Google Flights, with automatic mock fallback."""
     try:
         settings = get_settings()
         if not settings.serpapi_key:
-            return {"error": "SERPAPI_KEY is not configured — get a free key at serpapi.com"}
+            return {"search_unavailable": True, "reason": "SERPAPI_KEY not configured"}
 
         destination_info = lookup_destination(input.get("destination") or input.get("destinationLocationCode"))
         origin = lookup_origin(input.get("origin") or input.get("originLocationCode"))
@@ -62,7 +62,7 @@ def google_search_flights(input: dict[str, Any]) -> dict[str, Any]:
 
         departure_date = input.get("departure_date") or input.get("depart_date")
         if not departure_date:
-            return {"error": "departure_date is required"}
+            return {"search_unavailable": True, "reason": "departure_date missing"}
 
         currency = input.get("currency") or "USD"
         return_date = input.get("return_date")
@@ -83,17 +83,21 @@ def google_search_flights(input: dict[str, Any]) -> dict[str, Any]:
         if input.get("max_price"):
             params["max_price"] = int(input["max_price"])
 
-        with httpx.Client(timeout=30) as client:
+        with httpx.Client(timeout=15) as client:
             response = client.get(SERPAPI_BASE_URL, params=params)
+
         if response.status_code >= 400:
-            return {"error": "SerpAPI flight search failed", "status": response.status_code, "details": response.text}
+            return {"search_unavailable": True, "reason": f"SerpAPI returned {response.status_code}"}
 
         payload = response.json()
         if "error" in payload:
-            return {"error": payload["error"]}
+            return {"search_unavailable": True, "reason": payload["error"]}
 
         max_results = int(input.get("max_results") or input.get("max") or 5)
         raw = (payload.get("best_flights") or []) + (payload.get("other_flights") or [])
+        if not raw:
+            return {"search_unavailable": True, "reason": "No flights returned by SerpAPI"}
+
         offers = [_parse_flight(f, currency) for f in raw[:max_results]]
         return {
             "origin": origin,
@@ -104,8 +108,10 @@ def google_search_flights(input: dict[str, Any]) -> dict[str, Any]:
             "count": len(offers),
             "source": "google_flights",
         }
+    except (httpx.TimeoutException, httpx.ReadTimeout, httpx.ConnectTimeout):
+        return {"search_unavailable": True, "reason": "SerpAPI timed out"}
     except Exception as exc:
-        return {"error": str(exc) or "Flight search failed"}
+        return {"search_unavailable": True, "reason": str(exc) or "Flight search failed"}
 
 
 TOOLS: dict[str, ToolDef] = {

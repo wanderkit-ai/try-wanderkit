@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Plane, MapPin, Users, Wallet, Sparkles, ArrowRight, Calendar } from 'lucide-react';
+import { Plane, MapPin, Users, Wallet, Sparkles, ArrowRight, Calendar, Plus, X, ArrowRight as Arrow } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { labelWithCode, resolveIATA } from '@/lib/airport-codes';
 import type { TripStyle } from '@/lib/types';
 
 const TRIP_STYLES: { value: TripStyle; label: string; emoji: string }[] = [
@@ -24,12 +25,14 @@ const BUDGET_OPTIONS = [
 
 export interface TripFormData {
   origin: string;
-  destination: string;
+  destinations: string[];
   dates: string;
   travelers: number;
   budget: string;
   styles: TripStyle[];
   mustHaves: string;
+  /** @deprecated use destinations[0] */
+  destination: string;
 }
 
 interface Props {
@@ -37,9 +40,19 @@ interface Props {
   agentName: string;
 }
 
+function IATABadge({ value }: { value: string }) {
+  const code = resolveIATA(value);
+  if (!code || value.trim().toUpperCase() === code) return null;
+  return (
+    <span className="ml-1.5 text-2xs font-mono bg-accent/15 text-accent px-1 py-0.5 rounded">
+      {code}
+    </span>
+  );
+}
+
 export function ItineraryForm({ onSubmit, agentName }: Props) {
   const [origin, setOrigin] = useState('');
-  const [destination, setDestination] = useState('');
+  const [destinations, setDestinations] = useState<string[]>(['']);
   const [dates, setDates] = useState('');
   const [travelers, setTravelers] = useState(2);
   const [budget, setBudget] = useState('mid-range');
@@ -51,13 +64,35 @@ export function ItineraryForm({ onSubmit, agentName }: Props) {
     setStyles((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
   }
 
+  function addDestination() {
+    setDestinations((prev) => [...prev, '']);
+  }
+
+  function removeDestination(idx: number) {
+    setDestinations((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function updateDestination(idx: number, val: string) {
+    setDestinations((prev) => prev.map((d, i) => (i === idx ? val : d)));
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!origin.trim()) { setError('Please enter your departure city.'); return; }
-    if (!destination.trim()) { setError('Please enter your destination.'); return; }
+    const filledDests = destinations.map((d) => d.trim()).filter(Boolean);
+    if (filledDests.length === 0) { setError('Please enter at least one destination.'); return; }
     if (!dates.trim()) { setError('Please enter your travel dates.'); return; }
     setError('');
-    onSubmit({ origin: origin.trim(), destination: destination.trim(), dates: dates.trim(), travelers, budget, styles, mustHaves: mustHaves.trim() });
+    onSubmit({
+      origin: origin.trim(),
+      destinations: filledDests,
+      destination: filledDests[0],
+      dates: dates.trim(),
+      travelers,
+      budget,
+      styles,
+      mustHaves: mustHaves.trim(),
+    });
   }
 
   return (
@@ -73,26 +108,79 @@ export function ItineraryForm({ onSubmit, agentName }: Props) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Origin + Destination */}
-          <div className="grid grid-cols-2 gap-3">
-            <FieldWrapper label="Flying from" icon={<Plane className="w-3.5 h-3.5" />}>
+          {/* Origin */}
+          <FieldWrapper label="Flying from" icon={<Plane className="w-3.5 h-3.5" />}>
+            <div className="flex items-center gap-1.5">
               <input
                 type="text"
                 value={origin}
                 onChange={(e) => setOrigin(e.target.value)}
-                placeholder="New York, JFK…"
-                className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-muted"
+                placeholder="New York, London, Kathmandu…"
+                className="flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-muted"
               />
-            </FieldWrapper>
-            <FieldWrapper label="Going to" icon={<MapPin className="w-3.5 h-3.5" />}>
-              <input
-                type="text"
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-                placeholder="Marrakech, Morocco…"
-                className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-muted"
-              />
-            </FieldWrapper>
+              <IATABadge value={origin} />
+            </div>
+          </FieldWrapper>
+
+          {/* Destinations — multi-stop */}
+          <div className="surface rounded-lg px-4 py-3">
+            <label className="flex items-center gap-1.5 text-xs font-medium text-ink2 mb-3">
+              <span className="text-accent"><MapPin className="w-3.5 h-3.5" /></span>
+              {destinations.length > 1 ? 'Destinations (multi-stop)' : 'Going to'}
+            </label>
+
+            {/* Destination chain */}
+            <div className="space-y-2">
+              {destinations.map((dest, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  {idx > 0 && (
+                    <div className="flex items-center gap-1 text-muted shrink-0">
+                      <Arrow className="w-3 h-3" />
+                    </div>
+                  )}
+                  <div className={cn('flex items-center gap-1.5 flex-1', idx > 0 && 'pl-2')}>
+                    <input
+                      type="text"
+                      value={dest}
+                      onChange={(e) => updateDestination(idx, e.target.value)}
+                      placeholder={idx === 0 ? 'Kathmandu, Morocco, Bali…' : 'Next stop…'}
+                      className="flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-muted"
+                    />
+                    <IATABadge value={dest} />
+                  </div>
+                  {destinations.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeDestination(idx)}
+                      className="shrink-0 w-5 h-5 rounded hover:bg-hover flex items-center justify-center text-muted hover:text-ink transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Multi-stop preview pill */}
+            {destinations.filter(Boolean).length > 1 && (
+              <div className="mt-2.5 flex items-center gap-1 text-xs text-muted flex-wrap">
+                {destinations.filter(Boolean).map((d, i) => (
+                  <span key={i} className="flex items-center gap-1">
+                    {i > 0 && <Arrow className="w-2.5 h-2.5 text-muted/50" />}
+                    <span className="font-medium text-ink2">{labelWithCode(d)}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={addDestination}
+              className="mt-3 flex items-center gap-1 text-xs text-accent hover:text-accent/80 transition-colors"
+            >
+              <Plus className="w-3 h-3" strokeWidth={2.5} />
+              Add stop
+            </button>
           </div>
 
           {/* Dates */}

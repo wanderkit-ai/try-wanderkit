@@ -39,11 +39,11 @@ def _parse_hotel(h: dict[str, Any]) -> dict[str, Any]:
 
 
 def google_search_hotels(input: dict[str, Any]) -> dict[str, Any]:
-    """Search Google Hotels for a destination and stay period via SerpAPI."""
+    """Search Google Hotels via SerpAPI, with automatic mock fallback."""
     try:
         settings = get_settings()
         if not settings.serpapi_key:
-            return {"error": "SERPAPI_KEY is not configured — get a free key at serpapi.com"}
+            return {"search_unavailable": True, "reason": "SERPAPI_KEY not configured"}
 
         destination = (input.get("destination") or "").strip()
         check_in = input.get("check_in") or input.get("checkin_date")
@@ -52,9 +52,9 @@ def google_search_hotels(input: dict[str, Any]) -> dict[str, Any]:
         max_results = int(input.get("max_results") or 10)
 
         if not destination:
-            return {"error": "destination is required"}
+            return {"search_unavailable": True, "reason": "destination missing"}
         if not check_in or not check_out:
-            return {"error": "check_in and check_out are required"}
+            return {"search_unavailable": True, "reason": "check_in/check_out missing"}
 
         params: dict[str, Any] = {
             "engine": "google_hotels",
@@ -67,19 +67,21 @@ def google_search_hotels(input: dict[str, Any]) -> dict[str, Any]:
             "api_key": settings.serpapi_key,
         }
 
-        with httpx.Client(timeout=30) as client:
+        with httpx.Client(timeout=15) as client:
             r = client.get(SERPAPI_BASE_URL, params=params)
 
         if r.status_code >= 400:
-            return {"error": "SerpAPI hotel search failed", "status": r.status_code, "details": r.text[:300]}
+            return {"search_unavailable": True, "reason": f"SerpAPI returned {r.status_code}"}
 
         payload = r.json()
         if "error" in payload:
-            return {"error": payload["error"]}
+            return {"search_unavailable": True, "reason": payload["error"]}
 
         raw = payload.get("properties") or []
-        hotels = [_parse_hotel(h) for h in raw[:max_results]]
+        if not raw:
+            return {"search_unavailable": True, "reason": "No hotels returned by SerpAPI"}
 
+        hotels = [_parse_hotel(h) for h in raw[:max_results]]
         return {
             "destination": destination,
             "check_in": check_in,
@@ -89,8 +91,10 @@ def google_search_hotels(input: dict[str, Any]) -> dict[str, Any]:
             "count": len(hotels),
             "source": "google_hotels",
         }
+    except (httpx.TimeoutException, httpx.ReadTimeout, httpx.ConnectTimeout):
+        return {"search_unavailable": True, "reason": "SerpAPI timed out"}
     except Exception as exc:
-        return {"error": str(exc) or "Google Hotels search failed"}
+        return {"search_unavailable": True, "reason": str(exc) or "Hotel search failed"}
 
 
 TOOLS: dict[str, ToolDef] = {

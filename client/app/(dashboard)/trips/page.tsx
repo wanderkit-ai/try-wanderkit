@@ -6,6 +6,7 @@ import { TableShell, Th, Td } from '@/components/table-shell';
 import { trips, influencers, customers, findById } from '@/lib/mock-data';
 import { formatMoney } from '@/lib/utils';
 import { Plus } from 'lucide-react';
+import { ItineraryDraftsSection } from '@/components/itinerary-drafts-row';
 
 export default function TripsPage() {
   return (
@@ -41,6 +42,7 @@ export default function TripsPage() {
               </tr>
             </thead>
             <tbody>
+              <ItineraryDraftsSection />
               {trips.map((t) => {
                 const inf = findById(influencers, t.influencerId);
                 const cs = t.customerIds.map((id) => findById(customers, id)).filter(Boolean) as any[];
