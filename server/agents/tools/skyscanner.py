@@ -84,7 +84,7 @@ def skyscanner_search_flights(input: dict[str, Any]) -> dict[str, Any]:
     try:
         settings = get_settings()
         if not settings.rapidapi_key:
-            return {"error": "RAPIDAPI_KEY is not configured — sign up at rapidapi.com"}
+            return {"search_unavailable": True, "reason": "RAPIDAPI_KEY not configured"}
 
         origin_q = (input.get("origin") or "").strip()
         dest_q = (input.get("destination") or "").strip()
@@ -93,14 +93,14 @@ def skyscanner_search_flights(input: dict[str, Any]) -> dict[str, Any]:
         adults = int(input.get("adults") or input.get("passengers") or 1)
 
         if not origin_q or not dest_q or not depart_date:
-            return {"error": "origin, destination, and depart_date are required"}
+            return {"search_unavailable": True, "reason": "origin, destination, and depart_date are required"}
 
-        with httpx.Client(timeout=30) as client:
+        with httpx.Client(timeout=15) as client:
             try:
                 origin_sky, origin_entity = _resolve_sky_id(origin_q, client)
                 dest_sky, dest_entity = _resolve_sky_id(dest_q, client)
             except ValueError as e:
-                return {"error": str(e)}
+                return {"search_unavailable": True, "reason": str(e)}
 
             params: dict[str, Any] = {
                 "originSkyId": origin_sky,
@@ -122,16 +122,16 @@ def skyscanner_search_flights(input: dict[str, Any]) -> dict[str, Any]:
                 f"{_BASE}/api/v1/flights/searchFlights",
                 params=params,
                 headers=_headers(),
-                timeout=30,
+                timeout=15,
             )
 
         if r.status_code >= 400:
-            return {"error": "Skyscanner search failed", "status": r.status_code, "details": r.text[:300]}
+            return {"search_unavailable": True, "reason": f"Skyscanner returned {r.status_code}"}
 
         payload = r.json()
         if not payload.get("status") or "error" in payload:
-            msg = payload.get("message") or payload.get("error") or "No results found"
-            return {"error": msg}
+            msg = payload.get("message") or payload.get("error") or "No results"
+            return {"search_unavailable": True, "reason": msg}
 
         itineraries = (payload.get("data") or {}).get("itineraries") or []
         offers = [_parse_itinerary(i) for i in itineraries[: int(input.get("max_results") or 5)]]
@@ -146,8 +146,10 @@ def skyscanner_search_flights(input: dict[str, Any]) -> dict[str, Any]:
             "count": len(offers),
             "source": "skyscanner",
         }
+    except (httpx.TimeoutException, httpx.ReadTimeout, httpx.ConnectTimeout):
+        return {"search_unavailable": True, "reason": "Skyscanner timed out"}
     except Exception as exc:
-        return {"error": str(exc) or "Skyscanner search failed"}
+        return {"search_unavailable": True, "reason": str(exc) or "Skyscanner search failed"}
 
 
 TOOLS: dict[str, ToolDef] = {
